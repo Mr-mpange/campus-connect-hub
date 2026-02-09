@@ -1,0 +1,17 @@
+import { useAuth } from "@/contexts/AuthContext";
+import AdminDashboard from "./dashboards/AdminDashboard";
+import LecturerDashboard from "./dashboards/LecturerDashboard";
+import StudentDashboard from "./dashboards/StudentDashboard";
+
+const Dashboard = () => {
+  const { user } = useAuth();
+  if (!user) return null;
+
+  switch (user.role) {
+    case "admin": return <AdminDashboard />;
+    case "lecturer": return <LecturerDashboard />;
+    case "student": return <StudentDashboard />;
+  }
+};
+
+export default Dashboard;

@@ -1,0 +1,22 @@
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate, Outlet } from "react-router-dom";
+import AppSidebar from "./AppSidebar";
+
+const DashboardLayout = () => {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <AppSidebar />
+      <main className="ml-[260px] transition-all duration-300">
+        <div className="p-6 max-w-[1400px] mx-auto">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default DashboardLayout;
