@@ -6,12 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GraduationCap, AlertCircle } from "lucide-react";
 
-const DEMO_ACCOUNTS = [
-  { label: "Administrator", email: "admin@university.edu", role: "admin" },
-  { label: "Lecturer", email: "lecturer@university.edu", role: "lecturer" },
-  { label: "Student", email: "student@university.edu", role: "student" },
-] as const;
-
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -27,21 +21,8 @@ const Login = () => {
     try {
       await login(email, password);
       navigate("/dashboard");
-    } catch {
-      setError("Invalid email or password. Try a demo account below.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async (demoEmail: string) => {
-    setError("");
-    setLoading(true);
-    try {
-      await login(demoEmail, "demo");
-      navigate("/dashboard");
-    } catch {
-      setError("Login failed.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Invalid email or password.");
     } finally {
       setLoading(false);
     }
@@ -62,8 +43,7 @@ const Login = () => {
           </div>
           <h2 className="text-3xl font-bold mb-4">University Student Information Management System</h2>
           <p className="text-primary-foreground/70 text-sm leading-relaxed">
-            A secure, centralized platform for managing academic records, student data, and institutional workflows. 
-            Designed for reliability and accessibility across all devices.
+            A secure, centralized platform for managing academic records, student data, and institutional workflows.
           </p>
           <div className="mt-10 grid grid-cols-3 gap-4 text-center">
             {[
@@ -127,22 +107,6 @@ const Login = () => {
               {loading ? "Signing in…" : "Sign In"}
             </Button>
           </form>
-
-          <div className="mt-6">
-            <p className="text-xs text-muted-foreground text-center mb-3">Quick access with demo accounts</p>
-            <div className="grid grid-cols-3 gap-2">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.email}
-                  onClick={() => handleDemoLogin(acc.email)}
-                  disabled={loading}
-                  className="text-xs py-2 px-2 rounded-md border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground transition-colors font-medium"
-                >
-                  {acc.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
