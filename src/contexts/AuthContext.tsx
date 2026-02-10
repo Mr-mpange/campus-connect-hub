@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export type UserRole = "admin" | "lecturer" | "student";
 
@@ -8,6 +10,7 @@ export interface User {
   email: string;
   role: UserRole;
   department?: string;
+  departmentId?: string;
   studentId?: string;
 }
 
@@ -16,48 +19,86 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Mock users for demo
-const MOCK_USERS: Record<string, User> = {
-  "admin@university.edu": {
-    id: "1",
-    name: "Dr. James Okonkwo",
-    email: "admin@university.edu",
-    role: "admin",
-  },
-  "lecturer@university.edu": {
-    id: "2",
-    name: "Prof. Amina Yusuf",
-    email: "lecturer@university.edu",
-    role: "lecturer",
-    department: "Computer Science",
-  },
-  "student@university.edu": {
-    id: "3",
-    name: "David Mwangi",
-    email: "student@university.edu",
-    role: "student",
-    department: "Computer Science",
-    studentId: "CSC/2023/001",
-  },
-};
+async function buildUser(supabaseUser: SupabaseUser): Promise<User> {
+  // Fetch role
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", supabaseUser.id);
+
+  const role = (roles?.[0]?.role as UserRole) || "student";
+
+  // Fetch profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, department_id, student_id")
+    .eq("user_id", supabaseUser.id)
+    .maybeSingle();
+
+  let departmentName: string | undefined;
+  if (profile?.department_id) {
+    const { data: dept } = await supabase
+      .from("departments")
+      .select("name")
+      .eq("id", profile.department_id)
+      .maybeSingle();
+    departmentName = dept?.name ?? undefined;
+  }
+
+  return {
+    id: supabaseUser.id,
+    name: profile?.full_name || supabaseUser.email || "",
+    email: supabaseUser.email || "",
+    role,
+    department: departmentName,
+    departmentId: profile?.department_id ?? undefined,
+    studentId: profile?.student_id ?? undefined,
+  };
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = useCallback(async (email: string, _password: string) => {
-    const found = MOCK_USERS[email.toLowerCase()];
-    if (!found) throw new Error("Invalid credentials");
-    setUser(found);
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const u = await buildUser(session.user);
+        setUser(u);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const u = await buildUser(session.user);
+        setUser(u);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const logout = useCallback(() => setUser(null), []);
+  const login = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+  }, []);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, loading }}>
       {children}
     </AuthContext.Provider>
   );

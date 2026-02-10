@@ -3,7 +3,15 @@ import { Navigate, Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 
 const DashboardLayout = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-muted-foreground text-sm">Loading…</div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 

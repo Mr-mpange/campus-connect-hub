@@ -8,6 +8,9 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Departments from "./pages/Departments";
+import UserManagement from "./pages/UserManagement";
+import ResultsUpload from "./pages/ResultsUpload";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -25,10 +28,10 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/departments" element={<PlaceholderPage title="Departments" description="Manage academic departments" />} />
-              <Route path="/users" element={<PlaceholderPage title="User Management" description="Manage students, lecturers, and administrators" />} />
+              <Route path="/departments" element={<Departments />} />
+              <Route path="/users" element={<UserManagement />} />
               <Route path="/courses" element={<PlaceholderPage title="Courses" description="Course allocation and management" />} />
-              <Route path="/results" element={<PlaceholderPage title="Results Management" description="Upload, review, and manage academic results" />} />
+              <Route path="/results" element={<ResultsUpload />} />
               <Route path="/approvals" element={<PlaceholderPage title="Approvals" description="Review and approve submitted results" />} />
               <Route path="/my-results" element={<PlaceholderPage title="My Results" description="View your academic results and transcript" />} />
               <Route path="/notices" element={<PlaceholderPage title="Notices" description="Important announcements and notifications" />} />
