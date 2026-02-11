@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
+import CourseAllocationManager from "@/components/CourseAllocationManager";
 
 interface CourseForm {
   code: string;
@@ -30,6 +31,7 @@ const Courses = () => {
   const [form, setForm] = useState<CourseForm>(emptyForm);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterDept, setFilterDept] = useState<string>("all");
+  const [allocCourse, setAllocCourse] = useState<{ id: string; code: string } | null>(null);
 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["courses"],
@@ -135,7 +137,7 @@ const Courses = () => {
               <TableHead>Semester</TableHead>
               <TableHead>Level</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead className="w-32">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -154,6 +156,7 @@ const Courses = () => {
                 <TableCell><Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                 <TableCell>
                   <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => setAllocCourse({ id: c.id, code: c.code })} title="Manage allocations"><Users className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => setDeleteId(c.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   </div>
@@ -236,6 +239,13 @@ const Courses = () => {
               {deleteMutation.isPending ? "Deleting…" : "Delete"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Allocation Manager Dialog */}
+      <Dialog open={!!allocCourse} onOpenChange={() => setAllocCourse(null)}>
+        <DialogContent className="max-w-lg">
+          {allocCourse && <CourseAllocationManager courseId={allocCourse.id} courseCode={allocCourse.code} />}
         </DialogContent>
       </Dialog>
     </div>

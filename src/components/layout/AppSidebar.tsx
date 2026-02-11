@@ -34,7 +34,7 @@ const navItems: NavItem[] = [
   { label: "Results", icon: FileText, path: "/results", roles: ["admin", "lecturer"] },
   { label: "Approvals", icon: ClipboardCheck, path: "/approvals", roles: ["admin"] },
   { label: "My Results", icon: GraduationCap, path: "/my-results", roles: ["student"] },
-  { label: "Notices", icon: Bell, path: "/notices", roles: ["student"] },
+  { label: "Notices", icon: Bell, path: "/notices", roles: ["admin", "student"] },
   { label: "Analytics", icon: BarChart3, path: "/analytics", roles: ["admin"] },
   { label: "Audit Log", icon: Shield, path: "/audit-log", roles: ["admin"] },
   { label: "Settings", icon: Settings, path: "/settings", roles: ["admin", "lecturer", "student"] },
