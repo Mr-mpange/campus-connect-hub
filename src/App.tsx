@@ -11,6 +11,9 @@ import Dashboard from "./pages/Dashboard";
 import Departments from "./pages/Departments";
 import UserManagement from "./pages/UserManagement";
 import ResultsUpload from "./pages/ResultsUpload";
+import Courses from "./pages/Courses";
+import Approvals from "./pages/Approvals";
+import MyResults from "./pages/MyResults";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -30,10 +33,10 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/departments" element={<Departments />} />
               <Route path="/users" element={<UserManagement />} />
-              <Route path="/courses" element={<PlaceholderPage title="Courses" description="Course allocation and management" />} />
+              <Route path="/courses" element={<Courses />} />
               <Route path="/results" element={<ResultsUpload />} />
-              <Route path="/approvals" element={<PlaceholderPage title="Approvals" description="Review and approve submitted results" />} />
-              <Route path="/my-results" element={<PlaceholderPage title="My Results" description="View your academic results and transcript" />} />
+              <Route path="/approvals" element={<Approvals />} />
+              <Route path="/my-results" element={<MyResults />} />
               <Route path="/notices" element={<PlaceholderPage title="Notices" description="Important announcements and notifications" />} />
               <Route path="/analytics" element={<PlaceholderPage title="Analytics" description="System usage and academic performance analytics" />} />
               <Route path="/audit-log" element={<PlaceholderPage title="Audit Log" description="System activity and change history" />} />
