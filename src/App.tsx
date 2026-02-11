@@ -14,6 +14,8 @@ import ResultsUpload from "./pages/ResultsUpload";
 import Courses from "./pages/Courses";
 import Approvals from "./pages/Approvals";
 import MyResults from "./pages/MyResults";
+import AuditLog from "./pages/AuditLog";
+import Notices from "./pages/Notices";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -37,9 +39,9 @@ const App = () => (
               <Route path="/results" element={<ResultsUpload />} />
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/my-results" element={<MyResults />} />
-              <Route path="/notices" element={<PlaceholderPage title="Notices" description="Important announcements and notifications" />} />
+              <Route path="/notices" element={<Notices />} />
               <Route path="/analytics" element={<PlaceholderPage title="Analytics" description="System usage and academic performance analytics" />} />
-              <Route path="/audit-log" element={<PlaceholderPage title="Audit Log" description="System activity and change history" />} />
+              <Route path="/audit-log" element={<AuditLog />} />
               <Route path="/settings" element={<PlaceholderPage title="Settings" description="Account and system preferences" />} />
             </Route>
             <Route path="*" element={<NotFound />} />
