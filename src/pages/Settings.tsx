@@ -1,0 +1,202 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import PageHeader from "@/components/shared/PageHeader";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Lock, Bell, Save } from "lucide-react";
+import { toast } from "sonner";
+
+const Settings = () => {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Sync form when profile loads
+  const profileLoaded = profile?.full_name;
+  useState(() => {
+    if (profile) {
+      setFullName(profile.full_name);
+      setPhone(profile.phone || "");
+    }
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: fullName, phone: phone || null })
+        .eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["my-profile"] });
+      toast.success("Profile updated successfully");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async () => {
+      if (newPassword !== confirmPassword) throw new Error("Passwords do not match");
+      if (newPassword.length < 6) throw new Error("Password must be at least 6 characters");
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Password changed successfully");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  return (
+    <div>
+      <PageHeader title="Settings" description="Manage your account and preferences" />
+
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="profile" className="gap-2"><User className="w-4 h-4" /> Profile</TabsTrigger>
+          <TabsTrigger value="security" className="gap-2"><Lock className="w-4 h-4" /> Security</TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2"><Bell className="w-4 h-4" /> Notifications</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Profile Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 max-w-lg">
+              <div className="space-y-1.5">
+                <Label>Full Name</Label>
+                <Input
+                  value={fullName || profile?.full_name || ""}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Email</Label>
+                <Input value={user?.email || ""} disabled className="bg-muted" />
+                <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Phone</Label>
+                <Input
+                  value={phone || profile?.phone || ""}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+234..."
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Role</Label>
+                <Input value={user?.role || ""} disabled className="bg-muted capitalize" />
+              </div>
+              {user?.department && (
+                <div className="space-y-1.5">
+                  <Label>Department</Label>
+                  <Input value={user.department} disabled className="bg-muted" />
+                </div>
+              )}
+              {user?.studentId && (
+                <div className="space-y-1.5">
+                  <Label>Student ID</Label>
+                  <Input value={user.studentId} disabled className="bg-muted" />
+                </div>
+              )}
+              <Button
+                onClick={() => updateProfileMutation.mutate()}
+                disabled={updateProfileMutation.isPending}
+                className="gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {updateProfileMutation.isPending ? "Saving…" : "Save Changes"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="security">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Change Password</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 max-w-lg">
+              <div className="space-y-1.5">
+                <Label>New Password</Label>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Confirm New Password</Label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                />
+              </div>
+              <Button
+                onClick={() => changePasswordMutation.mutate()}
+                disabled={changePasswordMutation.isPending}
+                variant="destructive"
+                className="gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                {changePasswordMutation.isPending ? "Changing…" : "Change Password"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Notification Preferences</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 max-w-lg">
+                <p className="text-sm text-muted-foreground">
+                  Notification preferences will be available in a future update. 
+                  Currently, all system notifications are enabled by default.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Settings;

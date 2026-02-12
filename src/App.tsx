@@ -16,7 +16,8 @@ import Approvals from "./pages/Approvals";
 import MyResults from "./pages/MyResults";
 import AuditLog from "./pages/AuditLog";
 import Notices from "./pages/Notices";
-import PlaceholderPage from "./pages/PlaceholderPage";
+import Analytics from "./pages/Analytics";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,9 +41,9 @@ const App = () => (
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/notices" element={<Notices />} />
-              <Route path="/analytics" element={<PlaceholderPage title="Analytics" description="System usage and academic performance analytics" />} />
+              <Route path="/analytics" element={<Analytics />} />
               <Route path="/audit-log" element={<AuditLog />} />
-              <Route path="/settings" element={<PlaceholderPage title="Settings" description="Account and system preferences" />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
