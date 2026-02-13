@@ -51,6 +51,57 @@ function parseCSV(text: string): ResultEntry[] {
   return results;
 }
 
+const ExistingResultsTable = ({ results }: { results: { id: string; student_id: string; score: number | null; grade: string | null; status: string }[] }) => {
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["student-profiles-for-results", results.map((r) => r.student_id)],
+    queryFn: async () => {
+      const ids = [...new Set(results.map((r) => r.student_id))];
+      if (ids.length === 0) return [];
+      const { data, error } = await supabase.from("profiles").select("user_id, full_name, student_id, email").in("user_id", ids);
+      if (error) throw error;
+      return data;
+    },
+    enabled: results.length > 0,
+  });
+
+  const profileMap = new Map(profiles.map((p) => [p.user_id, p]));
+
+  if (results.length === 0) return null;
+
+  return (
+    <>
+      <h3 className="text-sm font-semibold text-foreground mb-2">Previously Uploaded Results</h3>
+      <div className="bg-card border border-border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Student</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Score</TableHead>
+              <TableHead>Grade</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {results.map((r) => {
+              const p = profileMap.get(r.student_id);
+              return (
+                <TableRow key={r.id}>
+                  <TableCell className="font-medium">{p?.full_name || r.student_id.slice(0, 8)}</TableCell>
+                  <TableCell className="text-muted-foreground">{p?.email || "—"}</TableCell>
+                  <TableCell>{r.score}</TableCell>
+                  <TableCell>{r.grade}</TableCell>
+                  <TableCell><Badge variant={r.status === "approved" ? "default" : "secondary"}>{r.status}</Badge></TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
+};
+
 const ResultsUpload = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -273,33 +324,7 @@ const ResultsUpload = () => {
       )}
 
       {/* Existing results */}
-      {existingResults.length > 0 && (
-        <>
-          <h3 className="text-sm font-semibold text-foreground mb-2">Previously Uploaded Results</h3>
-          <div className="bg-card border border-border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Grade</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {existingResults.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>{r.student_id?.slice(0, 8) || "—"}</TableCell>
-                    <TableCell>{r.score}</TableCell>
-                    <TableCell>{r.grade}</TableCell>
-                    <TableCell><Badge variant={r.status === "approved" ? "default" : "secondary"}>{r.status}</Badge></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </>
-      )}
+      <ExistingResultsTable results={existingResults} />
     </div>
   );
 };

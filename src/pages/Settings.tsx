@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,18 +32,16 @@ const Settings = () => {
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Sync form when profile loads
-  const profileLoaded = profile?.full_name;
-  useState(() => {
+  // Properly sync form when profile loads
+  useEffect(() => {
     if (profile) {
       setFullName(profile.full_name);
       setPhone(profile.phone || "");
     }
-  });
+  }, [profile]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
@@ -70,7 +68,6 @@ const Settings = () => {
     },
     onSuccess: () => {
       toast.success("Password changed successfully");
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     },
@@ -96,10 +93,7 @@ const Settings = () => {
             <CardContent className="space-y-4 max-w-lg">
               <div className="space-y-1.5">
                 <Label>Full Name</Label>
-                <Input
-                  value={fullName || profile?.full_name || ""}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
+                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
                 <Label>Email</Label>
@@ -107,12 +101,13 @@ const Settings = () => {
                 <p className="text-xs text-muted-foreground">Email cannot be changed</p>
               </div>
               <div className="space-y-1.5">
-                <Label>Phone</Label>
+                <Label>Phone Number</Label>
                 <Input
-                  value={phone || profile?.phone || ""}
+                  value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+234..."
+                  placeholder="+234 801 234 5678"
                 />
+                <p className="text-xs text-muted-foreground">Used for SMS notifications</p>
               </div>
               <div className="space-y-1.5">
                 <Label>Role</Label>
@@ -150,28 +145,13 @@ const Settings = () => {
             <CardContent className="space-y-4 max-w-lg">
               <div className="space-y-1.5">
                 <Label>New Password</Label>
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimum 6 characters"
-                />
+                <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Minimum 6 characters" />
               </div>
               <div className="space-y-1.5">
                 <Label>Confirm New Password</Label>
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Re-enter new password"
-                />
+                <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter new password" />
               </div>
-              <Button
-                onClick={() => changePasswordMutation.mutate()}
-                disabled={changePasswordMutation.isPending}
-                variant="destructive"
-                className="gap-2"
-              >
+              <Button onClick={() => changePasswordMutation.mutate()} disabled={changePasswordMutation.isPending} variant="destructive" className="gap-2">
                 <Lock className="w-4 h-4" />
                 {changePasswordMutation.isPending ? "Changing…" : "Change Password"}
               </Button>
@@ -181,16 +161,11 @@ const Settings = () => {
 
         <TabsContent value="notifications">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Notification Preferences</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-base">Notification Preferences</CardTitle></CardHeader>
             <CardContent>
-              <div className="space-y-4 max-w-lg">
-                <p className="text-sm text-muted-foreground">
-                  Notification preferences will be available in a future update. 
-                  Currently, all system notifications are enabled by default.
-                </p>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Notification preferences will be available in a future update. Currently, all system notifications are enabled by default.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
