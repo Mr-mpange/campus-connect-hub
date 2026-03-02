@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Send, AlertCircle, CheckCircle, FileSpreadsheet } from "lucide-react";
+import { Save, Send, AlertCircle, CheckCircle, FileSpreadsheet, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 interface ResultEntry {
@@ -325,6 +325,30 @@ const ResultsUpload = () => {
 
       {/* Existing results */}
       <ExistingResultsTable results={existingResults} />
+
+      {/* SMS Notify */}
+      {existingResults.length > 0 && selectedCourse && (
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={async () => {
+              try {
+                const { data, error } = await supabase.functions.invoke("send-sms-notification", {
+                  body: { type: "published", course_id: selectedCourse, academic_session: academicSession },
+                });
+                if (error) throw error;
+                toast.success(`SMS sent to ${data?.sent || 0} students`);
+              } catch (e: any) {
+                toast.error(e.message || "Failed to send SMS");
+              }
+            }}
+          >
+            <MessageSquare className="w-4 h-4" /> Notify Students via SMS
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,8 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import PageHeader from "@/components/shared/PageHeader";
 import StatCard from "@/components/shared/StatCard";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GraduationCap, BookOpen, TrendingUp, CheckCircle2, Clock } from "lucide-react";
+import { GraduationCap, BookOpen, TrendingUp, CheckCircle2, Clock, Download } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const gradePoints: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
 
@@ -64,9 +67,54 @@ const MyResults = () => {
     semMap.get(sem)!.push(r);
   });
 
+  const downloadTranscript = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Academic Transcript", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Student: ${user?.name || ""}`, 14, 28);
+    doc.text(`Student ID: ${user?.studentId || "N/A"}`, 14, 34);
+    doc.text(`Department: ${user?.department || "N/A"}`, 14, 40);
+    doc.text(`Cumulative GPA: ${cumulativeGPA}`, 14, 46);
+    doc.text(`Total Credits: ${totalCredits}`, 14, 52);
+
+    let yOffset = 60;
+    Array.from(grouped.entries()).forEach(([session, semMap]) => {
+      Array.from(semMap.entries()).sort(([a], [b]) => a.localeCompare(b)).forEach(([sem, semResults]) => {
+        const semGPA = computeGPA(semResults.map((r) => ({ grade: r.grade, credit_units: r.creditUnits })));
+        doc.setFontSize(11);
+        doc.text(`${session} — Semester ${sem} (GPA: ${semGPA})`, 14, yOffset);
+        yOffset += 4;
+
+        autoTable(doc, {
+          startY: yOffset,
+          head: [["Code", "Title", "Credits", "Score", "Grade"]],
+          body: semResults.map((r) => [r.courseCode, r.courseTitle, r.creditUnits, r.score ?? "—", r.grade || "—"]),
+          theme: "grid",
+          styles: { fontSize: 8 },
+          margin: { left: 14 },
+        });
+
+        yOffset = (doc as any).lastAutoTable.finalY + 10;
+        if (yOffset > 260) {
+          doc.addPage();
+          yOffset = 20;
+        }
+      });
+    });
+
+    doc.save(`transcript-${user?.name?.replace(/\s+/g, "_") || "student"}.pdf`);
+  };
+
   return (
     <div>
-      <PageHeader title="My Results" description="View your academic results, semester GPAs, and transcript" />
+      <PageHeader title="My Results" description="View your academic results, semester GPAs, and transcript">
+        {results.length > 0 && (
+          <Button size="sm" className="gap-2" onClick={downloadTranscript}>
+            <Download className="w-4 h-4" /> Download Transcript
+          </Button>
+        )}
+      </PageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard title="Cumulative GPA" value={cumulativeGPA} icon={GraduationCap} />
