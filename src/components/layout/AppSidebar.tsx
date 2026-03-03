@@ -15,6 +15,9 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
+  Library,
+  UserCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -27,17 +30,20 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard", roles: ["admin", "lecturer", "student"] },
+  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard", roles: ["admin", "lecturer", "student", "hod"] },
   { label: "Departments", icon: Building2, path: "/departments", roles: ["admin"] },
   { label: "Users", icon: Users, path: "/users", roles: ["admin"] },
-  { label: "Courses", icon: BookOpen, path: "/courses", roles: ["admin", "lecturer"] },
+  { label: "Courses", icon: BookOpen, path: "/courses", roles: ["admin", "lecturer", "hod"] },
   { label: "Results", icon: FileText, path: "/results", roles: ["admin", "lecturer"] },
   { label: "Approvals", icon: ClipboardCheck, path: "/approvals", roles: ["admin"] },
+  { label: "Lecturer Assignment", icon: UserCheck, path: "/lecturer-assignment", roles: ["hod"] },
+  { label: "My Courses", icon: Library, path: "/my-courses", roles: ["student"] },
   { label: "My Results", icon: GraduationCap, path: "/my-results", roles: ["student"] },
-  { label: "Notices", icon: Bell, path: "/notices", roles: ["admin", "student"] },
+  { label: "Payments", icon: CreditCard, path: "/payments", roles: ["student"] },
+  { label: "Notices", icon: Bell, path: "/notices", roles: ["admin", "student", "hod"] },
   { label: "Analytics", icon: BarChart3, path: "/analytics", roles: ["admin"] },
   { label: "Audit Log", icon: Shield, path: "/audit-log", roles: ["admin"] },
-  { label: "Settings", icon: Settings, path: "/settings", roles: ["admin", "lecturer", "student"] },
+  { label: "Settings", icon: Settings, path: "/settings", roles: ["admin", "lecturer", "student", "hod"] },
 ];
 
 const AppSidebar = () => {
@@ -50,7 +56,7 @@ const AppSidebar = () => {
 
   const filteredItems = navItems.filter((item) => item.roles.includes(user.role));
 
-  const roleLabel = user.role === "admin" ? "Administrator" : user.role === "lecturer" ? "Lecturer" : "Student";
+  const roleLabel = user.role === "admin" ? "Administrator" : user.role === "hod" ? "Head of Dept." : user.role === "lecturer" ? "Lecturer" : "Student";
 
   return (
     <aside

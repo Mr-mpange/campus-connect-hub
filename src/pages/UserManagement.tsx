@@ -113,6 +113,7 @@ const UserManagement = () => {
   const roleBadgeVariant = (role: string) => {
     switch (role) {
       case "admin": return "destructive" as const;
+      case "hod": return "outline" as const;
       case "lecturer": return "default" as const;
       default: return "secondary" as const;
     }
@@ -184,6 +185,7 @@ const UserManagement = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Administrator</SelectItem>
+                  <SelectItem value="hod">Head of Department</SelectItem>
                   <SelectItem value="lecturer">Lecturer</SelectItem>
                   <SelectItem value="student">Student</SelectItem>
                 </SelectContent>

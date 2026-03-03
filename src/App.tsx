@@ -14,10 +14,13 @@ import ResultsUpload from "./pages/ResultsUpload";
 import Courses from "./pages/Courses";
 import Approvals from "./pages/Approvals";
 import MyResults from "./pages/MyResults";
+import MyCourses from "./pages/MyCourses";
+import Payments from "./pages/Payments";
 import AuditLog from "./pages/AuditLog";
 import Notices from "./pages/Notices";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import HodDashboard from "./pages/dashboards/HodDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +43,9 @@ const App = () => (
               <Route path="/results" element={<ResultsUpload />} />
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/my-results" element={<MyResults />} />
+              <Route path="/my-courses" element={<MyCourses />} />
+              <Route path="/payments" element={<Payments />} />
+              <Route path="/lecturer-assignment" element={<HodDashboard />} />
               <Route path="/notices" element={<Notices />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/audit-log" element={<AuditLog />} />

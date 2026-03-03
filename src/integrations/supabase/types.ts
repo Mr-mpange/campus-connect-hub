@@ -209,6 +209,62 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          academic_session: string
+          amount: number
+          control_number: string
+          course_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          paid_at: string | null
+          payment_type: string
+          semester: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          academic_session: string
+          amount: number
+          control_number: string
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_type: string
+          semester?: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          academic_session?: string
+          amount?: number
+          control_number?: string
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_type?: string
+          semester?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -221,6 +277,7 @@ export type Database = {
           student_id: string | null
           updated_at: string
           user_id: string
+          year_of_study: number | null
         }
         Insert: {
           created_at?: string
@@ -233,6 +290,7 @@ export type Database = {
           student_id?: string | null
           updated_at?: string
           user_id: string
+          year_of_study?: number | null
         }
         Update: {
           created_at?: string
@@ -245,6 +303,7 @@ export type Database = {
           student_id?: string | null
           updated_at?: string
           user_id?: string
+          year_of_study?: number | null
         }
         Relationships: [
           {
@@ -262,15 +321,20 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           course_id: string
+          coursework_total: number | null
           created_at: string
           grade: string | null
+          group_assignment: number | null
           id: string
+          individual_assignment: number | null
           lecturer_id: string
           rejection_reason: string | null
           score: number | null
           status: Database["public"]["Enums"]["result_status"]
           student_id: string
           submitted_at: string | null
+          test1_score: number | null
+          university_exam: number | null
           updated_at: string
         }
         Insert: {
@@ -278,15 +342,20 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           course_id: string
+          coursework_total?: number | null
           created_at?: string
           grade?: string | null
+          group_assignment?: number | null
           id?: string
+          individual_assignment?: number | null
           lecturer_id: string
           rejection_reason?: string | null
           score?: number | null
           status?: Database["public"]["Enums"]["result_status"]
           student_id: string
           submitted_at?: string | null
+          test1_score?: number | null
+          university_exam?: number | null
           updated_at?: string
         }
         Update: {
@@ -294,20 +363,66 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           course_id?: string
+          coursework_total?: number | null
           created_at?: string
           grade?: string | null
+          group_assignment?: number | null
           id?: string
+          individual_assignment?: number | null
           lecturer_id?: string
           rejection_reason?: string | null
           score?: number | null
           status?: Database["public"]["Enums"]["result_status"]
           student_id?: string
           submitted_at?: string | null
+          test1_score?: number | null
+          university_exam?: number | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "results_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_courses: {
+        Row: {
+          academic_session: string
+          course_id: string
+          created_at: string
+          id: string
+          semester: string
+          status: string
+          student_id: string
+          year_of_study: number
+        }
+        Insert: {
+          academic_session: string
+          course_id: string
+          created_at?: string
+          id?: string
+          semester?: string
+          status?: string
+          student_id: string
+          year_of_study?: number
+        }
+        Update: {
+          academic_session?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          semester?: string
+          status?: string
+          student_id?: string
+          year_of_study?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_courses_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"

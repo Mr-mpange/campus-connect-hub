@@ -153,7 +153,12 @@ const MyResults = () => {
                           <TableHead>Code</TableHead>
                           <TableHead>Title</TableHead>
                           <TableHead>Credits</TableHead>
-                          <TableHead>Score</TableHead>
+                          <TableHead>T1 (20%)</TableHead>
+                          <TableHead>IA (15%)</TableHead>
+                          <TableHead>GA (15%)</TableHead>
+                          <TableHead>CW</TableHead>
+                          <TableHead>UE (50%)</TableHead>
+                          <TableHead>Final</TableHead>
                           <TableHead>Grade</TableHead>
                           <TableHead>Status</TableHead>
                         </TableRow>
@@ -164,7 +169,12 @@ const MyResults = () => {
                             <TableCell className="font-medium">{r.courseCode}</TableCell>
                             <TableCell>{r.courseTitle}</TableCell>
                             <TableCell>{r.creditUnits}</TableCell>
-                            <TableCell>{r.score ?? "—"}</TableCell>
+                            <TableCell>{r.test1_score ?? "—"}</TableCell>
+                            <TableCell>{r.individual_assignment ?? "—"}</TableCell>
+                            <TableCell>{r.group_assignment ?? "—"}</TableCell>
+                            <TableCell>{r.coursework_total != null ? Number(r.coursework_total).toFixed(1) : "—"}</TableCell>
+                            <TableCell>{r.university_exam ?? "—"}</TableCell>
+                            <TableCell className="font-semibold">{r.score ?? "—"}</TableCell>
                             <TableCell className="font-semibold">{r.grade || "—"}</TableCell>
                             <TableCell>
                               {r.status === "published" ? (
