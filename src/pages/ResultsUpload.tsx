@@ -15,6 +15,11 @@ import { toast } from "sonner";
 
 interface ResultEntry {
   studentEmail: string;
+  test1: number;
+  individualAssignment: number;
+  groupAssignment: number;
+  universityExam: number;
+  courseworkTotal: number;
   score: number;
   grade: string;
   valid: boolean;
@@ -30,42 +35,47 @@ function calculateGrade(score: number): string {
   return "F";
 }
 
+function computeFinalScore(test1: number, individual: number, group: number, ue: number) {
+  const courseworkTotal = (test1 * 0.20) + (individual * 0.15) + (group * 0.15);
+  const ueWeighted = ue * 0.50;
+  return { courseworkTotal, finalScore: Math.round(courseworkTotal + ueWeighted) };
+}
+
 function parseCSV(text: string): ResultEntry[] {
   const lines = text.trim().split("\n");
   const results: ResultEntry[] = [];
-  // Skip header row
   for (let i = 1; i < lines.length; i++) {
     const parts = lines[i].split(",").map((s) => s.trim());
     const email = parts[0] || "";
-    const scoreRaw = parseFloat(parts[1]);
-    const valid = !!email && !isNaN(scoreRaw) && scoreRaw >= 0 && scoreRaw <= 100;
-    const score = valid ? scoreRaw : 0;
-    results.push({
-      studentEmail: email,
-      score,
-      grade: valid ? calculateGrade(score) : "",
-      valid,
-      error: !valid ? "Invalid email or score" : undefined,
-    });
+    const test1 = parseFloat(parts[1]);
+    const individual = parseFloat(parts[2]);
+    const group = parseFloat(parts[3]);
+    const ue = parseFloat(parts[4]);
+    const allValid = [test1, individual, group, ue].every((v) => !isNaN(v) && v >= 0 && v <= 100);
+    const valid = !!email && allValid;
+    if (valid) {
+      const { courseworkTotal, finalScore } = computeFinalScore(test1, individual, group, ue);
+      results.push({ studentEmail: email, test1, individualAssignment: individual, groupAssignment: group, universityExam: ue, courseworkTotal, score: finalScore, grade: calculateGrade(finalScore), valid: true });
+    } else {
+      results.push({ studentEmail: email, test1: test1 || 0, individualAssignment: individual || 0, groupAssignment: group || 0, universityExam: ue || 0, courseworkTotal: 0, score: 0, grade: "", valid: false, error: "Invalid data" });
+    }
   }
   return results;
 }
 
-const ExistingResultsTable = ({ results }: { results: { id: string; student_id: string; score: number | null; grade: string | null; status: string }[] }) => {
+const ExistingResultsTable = ({ results }: { results: any[] }) => {
   const { data: profiles = [] } = useQuery({
     queryKey: ["student-profiles-for-results", results.map((r) => r.student_id)],
     queryFn: async () => {
       const ids = [...new Set(results.map((r) => r.student_id))];
       if (ids.length === 0) return [];
-      const { data, error } = await supabase.from("profiles").select("user_id, full_name, student_id, email").in("user_id", ids);
+      const { data, error } = await supabase.from("profiles").select("user_id, full_name, email").in("user_id", ids);
       if (error) throw error;
       return data;
     },
     enabled: results.length > 0,
   });
-
   const profileMap = new Map(profiles.map((p) => [p.user_id, p]));
-
   if (results.length === 0) return null;
 
   return (
@@ -77,7 +87,12 @@ const ExistingResultsTable = ({ results }: { results: { id: string; student_id: 
             <TableRow>
               <TableHead>Student</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Score</TableHead>
+              <TableHead>T1 (20%)</TableHead>
+              <TableHead>IA (15%)</TableHead>
+              <TableHead>GA (15%)</TableHead>
+              <TableHead>UE (50%)</TableHead>
+              <TableHead>CW Total</TableHead>
+              <TableHead>Final</TableHead>
               <TableHead>Grade</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
@@ -88,9 +103,14 @@ const ExistingResultsTable = ({ results }: { results: { id: string; student_id: 
               return (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{p?.full_name || r.student_id.slice(0, 8)}</TableCell>
-                  <TableCell className="text-muted-foreground">{p?.email || "—"}</TableCell>
-                  <TableCell>{r.score}</TableCell>
-                  <TableCell>{r.grade}</TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{p?.email || "—"}</TableCell>
+                  <TableCell>{r.test1_score ?? "—"}</TableCell>
+                  <TableCell>{r.individual_assignment ?? "—"}</TableCell>
+                  <TableCell>{r.group_assignment ?? "—"}</TableCell>
+                  <TableCell>{r.university_exam ?? "—"}</TableCell>
+                  <TableCell>{r.coursework_total != null ? Number(r.coursework_total).toFixed(1) : "—"}</TableCell>
+                  <TableCell className="font-semibold">{r.score ?? "—"}</TableCell>
+                  <TableCell className="font-semibold">{r.grade || "—"}</TableCell>
                   <TableCell><Badge variant={r.status === "approved" ? "default" : "secondary"}>{r.status}</Badge></TableCell>
                 </TableRow>
               );
@@ -109,9 +129,11 @@ const ResultsUpload = () => {
   const [academicSession, setAcademicSession] = useState("2024/2025");
   const [entries, setEntries] = useState<ResultEntry[]>([]);
   const [manualEmail, setManualEmail] = useState("");
-  const [manualScore, setManualScore] = useState("");
+  const [manualTest1, setManualTest1] = useState("");
+  const [manualIndividual, setManualIndividual] = useState("");
+  const [manualGroup, setManualGroup] = useState("");
+  const [manualUE, setManualUE] = useState("");
 
-  // Get lecturer's allocated courses
   const { data: allocations = [] } = useQuery({
     queryKey: ["my-allocations", user?.id],
     queryFn: async () => {
@@ -127,7 +149,6 @@ const ResultsUpload = () => {
     enabled: !!user,
   });
 
-  // Existing results for this course
   const { data: existingResults = [] } = useQuery({
     queryKey: ["my-results-upload", selectedCourse, academicSession],
     queryFn: async () => {
@@ -152,22 +173,27 @@ const ResultsUpload = () => {
       const text = ev.target?.result as string;
       const parsed = parseCSV(text);
       setEntries(parsed);
-      const validCount = parsed.filter((r) => r.valid).length;
-      toast.info(`Parsed ${parsed.length} rows, ${validCount} valid`);
+      toast.info(`Parsed ${parsed.length} rows, ${parsed.filter((r) => r.valid).length} valid`);
     };
     reader.readAsText(file);
     e.target.value = "";
   }, []);
 
   const addManualEntry = () => {
-    const score = parseFloat(manualScore);
-    if (!manualEmail || isNaN(score) || score < 0 || score > 100) {
-      toast.error("Enter a valid email and score (0–100)");
+    const t1 = parseFloat(manualTest1);
+    const ind = parseFloat(manualIndividual);
+    const grp = parseFloat(manualGroup);
+    const ue = parseFloat(manualUE);
+    if (!manualEmail || [t1, ind, grp, ue].some((v) => isNaN(v) || v < 0 || v > 100)) {
+      toast.error("Enter valid email and scores (0–100 each)");
       return;
     }
-    setEntries((prev) => [...prev, { studentEmail: manualEmail, score, grade: calculateGrade(score), valid: true }]);
-    setManualEmail("");
-    setManualScore("");
+    const { courseworkTotal, finalScore } = computeFinalScore(t1, ind, grp, ue);
+    setEntries((prev) => [...prev, {
+      studentEmail: manualEmail, test1: t1, individualAssignment: ind, groupAssignment: grp,
+      universityExam: ue, courseworkTotal, score: finalScore, grade: calculateGrade(finalScore), valid: true,
+    }]);
+    setManualEmail(""); setManualTest1(""); setManualIndividual(""); setManualGroup(""); setManualUE("");
   };
 
   const saveDraftMutation = useMutation({
@@ -176,7 +202,6 @@ const ResultsUpload = () => {
       const validEntries = entries.filter((e) => e.valid);
       if (validEntries.length === 0) throw new Error("No valid entries");
 
-      // Look up student IDs by email
       const { data: studentProfiles, error: lookupError } = await supabase
         .from("profiles")
         .select("user_id, email")
@@ -191,6 +216,11 @@ const ResultsUpload = () => {
           course_id: selectedCourse,
           lecturer_id: user.id,
           academic_session: academicSession,
+          test1_score: e.test1,
+          individual_assignment: e.individualAssignment,
+          group_assignment: e.groupAssignment,
+          university_exam: e.universityExam,
+          coursework_total: e.courseworkTotal,
           score: e.score,
           grade: e.grade,
           status,
@@ -198,7 +228,6 @@ const ResultsUpload = () => {
         }));
 
       if (rows.length === 0) throw new Error("No matching student profiles found");
-
       const { error } = await supabase.from("results").upsert(rows, { onConflict: "student_id,course_id,academic_session" as never });
       if (error) throw error;
     },
@@ -215,7 +244,7 @@ const ResultsUpload = () => {
 
   return (
     <div>
-      <PageHeader title="Results Management" description="Upload and manage academic results for your courses" />
+      <PageHeader title="Results Management" description="Upload results — Coursework (50%): Test1 20%, Individual 15%, Group 15% | UE (50%)" />
 
       <div className="grid gap-6 lg:grid-cols-3 mb-6">
         <Card>
@@ -243,26 +272,41 @@ const ResultsUpload = () => {
           <CardContent>
             <Label htmlFor="csv-upload" className="cursor-pointer flex items-center gap-2 border border-dashed border-border rounded-md p-3 hover:bg-muted/50 transition-colors">
               <FileSpreadsheet className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Choose CSV file (email,score)</span>
+              <span className="text-sm text-muted-foreground">CSV: email, test1, individual, group, ue</span>
             </Label>
             <input id="csv-upload" type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
           </CardContent>
         </Card>
       </div>
 
-      {/* Manual entry */}
+      {/* Manual entry with coursework breakdown */}
       <Card className="mb-6">
-        <CardContent className="pt-4">
-          <div className="flex gap-3 items-end">
-            <div className="flex-1 space-y-1">
+        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Manual Entry</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 items-end">
+            <div className="col-span-2 space-y-1">
               <Label className="text-xs">Student Email</Label>
               <Input value={manualEmail} onChange={(e) => setManualEmail(e.target.value)} placeholder="student@university.edu" />
             </div>
-            <div className="w-32 space-y-1">
-              <Label className="text-xs">Score</Label>
-              <Input type="number" min={0} max={100} value={manualScore} onChange={(e) => setManualScore(e.target.value)} placeholder="75" />
+            <div className="space-y-1">
+              <Label className="text-xs">Test 1 (20%)</Label>
+              <Input type="number" min={0} max={100} value={manualTest1} onChange={(e) => setManualTest1(e.target.value)} placeholder="0-100" />
             </div>
-            <Button variant="outline" onClick={addManualEntry}>Add</Button>
+            <div className="space-y-1">
+              <Label className="text-xs">Individual (15%)</Label>
+              <Input type="number" min={0} max={100} value={manualIndividual} onChange={(e) => setManualIndividual(e.target.value)} placeholder="0-100" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Group (15%)</Label>
+              <Input type="number" min={0} max={100} value={manualGroup} onChange={(e) => setManualGroup(e.target.value)} placeholder="0-100" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">UE (50%)</Label>
+              <Input type="number" min={0} max={100} value={manualUE} onChange={(e) => setManualUE(e.target.value)} placeholder="0-100" />
+            </div>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <Button variant="outline" onClick={addManualEntry}>Add Entry</Button>
           </div>
         </CardContent>
       </Card>
@@ -293,12 +337,17 @@ const ResultsUpload = () => {
 
       {/* Entries table */}
       {entries.length > 0 && (
-        <div className="bg-card border border-border rounded-lg mb-6">
+        <div className="bg-card border border-border rounded-lg mb-6 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Student Email</TableHead>
-                <TableHead>Score</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>T1 (20%)</TableHead>
+                <TableHead>IA (15%)</TableHead>
+                <TableHead>GA (15%)</TableHead>
+                <TableHead>UE (50%)</TableHead>
+                <TableHead>CW Total</TableHead>
+                <TableHead>Final</TableHead>
                 <TableHead>Grade</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -306,15 +355,16 @@ const ResultsUpload = () => {
             <TableBody>
               {entries.map((entry, i) => (
                 <TableRow key={i}>
-                  <TableCell>{entry.studentEmail}</TableCell>
-                  <TableCell>{entry.score}</TableCell>
-                  <TableCell>{entry.grade}</TableCell>
+                  <TableCell className="text-xs">{entry.studentEmail}</TableCell>
+                  <TableCell>{entry.test1}</TableCell>
+                  <TableCell>{entry.individualAssignment}</TableCell>
+                  <TableCell>{entry.groupAssignment}</TableCell>
+                  <TableCell>{entry.universityExam}</TableCell>
+                  <TableCell>{entry.courseworkTotal.toFixed(1)}</TableCell>
+                  <TableCell className="font-semibold">{entry.score}</TableCell>
+                  <TableCell className="font-semibold">{entry.grade}</TableCell>
                   <TableCell>
-                    {entry.valid ? (
-                      <Badge variant="default">Valid</Badge>
-                    ) : (
-                      <Badge variant="destructive">{entry.error}</Badge>
-                    )}
+                    {entry.valid ? <Badge variant="default">Valid</Badge> : <Badge variant="destructive">{entry.error}</Badge>}
                   </TableCell>
                 </TableRow>
               ))}
@@ -323,10 +373,8 @@ const ResultsUpload = () => {
         </div>
       )}
 
-      {/* Existing results */}
       <ExistingResultsTable results={existingResults} />
 
-      {/* SMS Notify */}
       {existingResults.length > 0 && selectedCourse && (
         <div className="mt-4 flex justify-end">
           <Button
