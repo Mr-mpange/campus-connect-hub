@@ -39,6 +39,16 @@ const PaymentVerification = () => {
     },
   });
 
+  const sendPaymentNotification = async (paymentId: string, action: string) => {
+    try {
+      await supabase.functions.invoke("payment-notification", {
+        body: { payment_id: paymentId, action },
+      });
+    } catch (err) {
+      console.warn("SMS notification failed:", err);
+    }
+  };
+
   const markPaidMutation = useMutation({
     mutationFn: async (paymentId: string) => {
       const { error } = await supabase
@@ -46,10 +56,12 @@ const PaymentVerification = () => {
         .update({ status: "paid", paid_at: new Date().toISOString() })
         .eq("id", paymentId);
       if (error) throw error;
+      return paymentId;
     },
-    onSuccess: () => {
+    onSuccess: (paymentId) => {
       qc.invalidateQueries({ queryKey: ["admin-payments"] });
-      toast.success("Payment marked as paid");
+      toast.success("Payment verified — SMS notification sent to student");
+      sendPaymentNotification(paymentId, "paid");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -61,10 +73,12 @@ const PaymentVerification = () => {
         .update({ status: "cancelled" })
         .eq("id", paymentId);
       if (error) throw error;
+      return paymentId;
     },
-    onSuccess: () => {
+    onSuccess: (paymentId) => {
       qc.invalidateQueries({ queryKey: ["admin-payments"] });
-      toast.success("Payment cancelled");
+      toast.success("Payment cancelled — SMS notification sent to student");
+      sendPaymentNotification(paymentId, "cancelled");
     },
     onError: (e) => toast.error(e.message),
   });
