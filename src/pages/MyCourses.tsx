@@ -1,11 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PageHeader from "@/components/shared/PageHeader";
 import StatCard from "@/components/shared/StatCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, GraduationCap, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BookOpen, GraduationCap, TrendingUp, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const gradePoints: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
 
@@ -22,6 +29,11 @@ function computeGPA(results: { grade: string | null; credit_units: number }[]): 
 
 const MyCourses = () => {
   const { user } = useAuth();
+  const qc = useQueryClient();
+  const [semester, setSemester] = useState("1");
+  const [yearOfStudy, setYearOfStudy] = useState("1");
+  const [academicSession, setAcademicSession] = useState("2024/2025");
+  const [showRegistration, setShowRegistration] = useState(false);
 
   // Fetch registered courses
   const { data: studentCourses = [], isLoading } = useQuery({
@@ -39,6 +51,24 @@ const MyCourses = () => {
     enabled: !!user,
   });
 
+  // Fetch available courses for registration (department courses)
+  const { data: availableCourses = [] } = useQuery({
+    queryKey: ["available-courses", user?.departmentId, semester],
+    queryFn: async () => {
+      if (!user?.departmentId) return [];
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("department_id", user.departmentId)
+        .eq("is_active", true)
+        .eq("semester", semester)
+        .order("code");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.departmentId && showRegistration,
+  });
+
   // Fetch results for GPA
   const { data: results = [] } = useQuery({
     queryKey: ["my-results-for-gpa", user?.id],
@@ -53,6 +83,32 @@ const MyCourses = () => {
       return data;
     },
     enabled: !!user,
+  });
+
+  // Already registered course IDs
+  const registeredCourseIds = new Set(studentCourses.map((sc) => sc.course_id));
+
+  // Courses not yet registered
+  const unregisteredCourses = availableCourses.filter((c) => !registeredCourseIds.has(c.id));
+
+  const registerMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("student_courses").insert({
+        student_id: user.id,
+        course_id: courseId,
+        semester,
+        year_of_study: parseInt(yearOfStudy),
+        academic_session: academicSession,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["my-student-courses"] });
+      qc.invalidateQueries({ queryKey: ["available-courses"] });
+      toast.success("Course registered successfully");
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   // Group courses by year
@@ -81,7 +137,7 @@ const MyCourses = () => {
 
   return (
     <div>
-      <PageHeader title="My Courses" description="View your registered courses by year of study with GPA" />
+      <PageHeader title="My Courses" description="View your registered courses and register for new ones" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard title="Cumulative GPA" value={allGPA} icon={GraduationCap} />
@@ -89,17 +145,112 @@ const MyCourses = () => {
         <StatCard title="Total Credits" value={totalCredits.toString()} icon={TrendingUp} />
       </div>
 
+      {/* Course Registration Card */}
+      <Card className="mb-6">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium">Course Registration</CardTitle>
+            <Button
+              variant={showRegistration ? "secondary" : "default"}
+              size="sm"
+              onClick={() => setShowRegistration(!showRegistration)}
+              className="gap-1"
+            >
+              <Plus className="w-4 h-4" />
+              {showRegistration ? "Hide" : "Register Courses"}
+            </Button>
+          </div>
+        </CardHeader>
+        {showRegistration && (
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              <div className="space-y-1">
+                <Label className="text-xs">Semester</Label>
+                <Select value={semester} onValueChange={setSemester}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Semester 1</SelectItem>
+                    <SelectItem value="2">Semester 2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Year of Study</Label>
+                <Select value={yearOfStudy} onValueChange={setYearOfStudy}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map((y) => (
+                      <SelectItem key={y} value={y.toString()}>Year {y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Academic Session</Label>
+                <Input value={academicSession} onChange={(e) => setAcademicSession(e.target.value)} />
+              </div>
+            </div>
+
+            {unregisteredCourses.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No available courses for this semester, or all courses already registered.
+              </p>
+            ) : (
+              <div className="bg-card border border-border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Credits</TableHead>
+                      <TableHead>Level</TableHead>
+                      <TableHead>Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {unregisteredCourses.map((course) => (
+                      <TableRow key={course.id}>
+                        <TableCell className="font-medium">{course.code}</TableCell>
+                        <TableCell>{course.title}</TableCell>
+                        <TableCell>{course.credit_units}</TableCell>
+                        <TableCell>{course.level || "—"}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs gap-1"
+                            onClick={() => registerMutation.mutate(course.id)}
+                            disabled={registerMutation.isPending}
+                          >
+                            {registerMutation.isPending ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Plus className="w-3 h-3" />
+                            )}
+                            Register
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Registered Courses */}
       {isLoading ? (
         <p className="text-center text-muted-foreground py-8">Loading courses…</p>
       ) : studentCourses.length === 0 ? (
         <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground">
-          No courses registered yet. Contact your department for course registration.
+          No courses registered yet. Use the registration form above to add courses.
         </div>
       ) : (
         Array.from(grouped.entries())
           .sort(([a], [b]) => a - b)
           .map(([year, courses]) => {
-            // Split by semester
             const sem1 = courses.filter((c) => (c.courses as any)?.semester === "1" || c.semester === "1");
             const sem2 = courses.filter((c) => (c.courses as any)?.semester === "2" || c.semester === "2");
 
