@@ -21,6 +21,7 @@ import Notices from "./pages/Notices";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import HodDashboard from "./pages/dashboards/HodDashboard";
+import PaymentVerification from "./pages/PaymentVerification";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/my-courses" element={<MyCourses />} />
               <Route path="/payments" element={<Payments />} />
+              <Route path="/payment-verification" element={<PaymentVerification />} />
               <Route path="/lecturer-assignment" element={<HodDashboard />} />
               <Route path="/notices" element={<Notices />} />
               <Route path="/analytics" element={<Analytics />} />

@@ -40,6 +40,7 @@ const navItems: NavItem[] = [
   { label: "My Courses", icon: Library, path: "/my-courses", roles: ["student"] },
   { label: "My Results", icon: GraduationCap, path: "/my-results", roles: ["student"] },
   { label: "Payments", icon: CreditCard, path: "/payments", roles: ["student"] },
+  { label: "Payment Verification", icon: CreditCard, path: "/payment-verification", roles: ["admin"] },
   { label: "Notices", icon: Bell, path: "/notices", roles: ["admin", "student", "hod"] },
   { label: "Analytics", icon: BarChart3, path: "/analytics", roles: ["admin"] },
   { label: "Audit Log", icon: Shield, path: "/audit-log", roles: ["admin"] },
