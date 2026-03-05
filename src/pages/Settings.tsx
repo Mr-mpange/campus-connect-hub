@@ -76,6 +76,25 @@ const Settings = () => {
     onError: (e) => toast.error(e.message),
   });
 
+  const updatePinMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+      if (ussdPin.length !== 4 || !/^\d{4}$/.test(ussdPin)) throw new Error("PIN must be exactly 4 digits");
+      if (ussdPin !== confirmPin) throw new Error("PINs do not match");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ ussd_pin: ussdPin } as any)
+        .eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("USSD PIN updated successfully");
+      setUssdPin("");
+      setConfirmPin("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   return (
     <div>
       <PageHeader title="Settings" description="Manage your account and preferences" />
