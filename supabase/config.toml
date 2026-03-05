@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.payment-notification]
 verify_jwt = false
+
+[functions.ussd-callback]
+verify_jwt = false

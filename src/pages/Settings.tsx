@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Lock, Bell, Save } from "lucide-react";
+import { User, Lock, Bell, Save, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
 const Settings = () => {
@@ -34,6 +34,8 @@ const Settings = () => {
   const [phone, setPhone] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [ussdPin, setUssdPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
 
   // Properly sync form when profile loads
   useEffect(() => {
@@ -74,6 +76,25 @@ const Settings = () => {
     onError: (e) => toast.error(e.message),
   });
 
+  const updatePinMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+      if (ussdPin.length !== 4 || !/^\d{4}$/.test(ussdPin)) throw new Error("PIN must be exactly 4 digits");
+      if (ussdPin !== confirmPin) throw new Error("PINs do not match");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ ussd_pin: ussdPin } as any)
+        .eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("USSD PIN updated successfully");
+      setUssdPin("");
+      setConfirmPin("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   return (
     <div>
       <PageHeader title="Settings" description="Manage your account and preferences" />
@@ -82,6 +103,7 @@ const Settings = () => {
         <TabsList>
           <TabsTrigger value="profile" className="gap-2"><User className="w-4 h-4" /> Profile</TabsTrigger>
           <TabsTrigger value="security" className="gap-2"><Lock className="w-4 h-4" /> Security</TabsTrigger>
+          <TabsTrigger value="ussd" className="gap-2"><Smartphone className="w-4 h-4" /> USSD</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2"><Bell className="w-4 h-4" /> Notifications</TabsTrigger>
         </TabsList>
 
@@ -155,6 +177,57 @@ const Settings = () => {
                 <Lock className="w-4 h-4" />
                 {changePasswordMutation.isPending ? "Changing…" : "Change Password"}
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ussd">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">USSD Access PIN</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 max-w-lg">
+              <p className="text-sm text-muted-foreground">
+                Set a 4-digit PIN to access the student portal via USSD. You can check results, payment status, registered courses, and notices from any phone.
+              </p>
+              <div className="space-y-1.5">
+                <Label>New 4-Digit PIN</Label>
+                <Input
+                  type="password"
+                  maxLength={4}
+                  value={ussdPin}
+                  onChange={(e) => setUssdPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="e.g. 1234"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Confirm PIN</Label>
+                <Input
+                  type="password"
+                  maxLength={4}
+                  value={confirmPin}
+                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="Re-enter PIN"
+                />
+              </div>
+              <Button
+                onClick={() => updatePinMutation.mutate()}
+                disabled={updatePinMutation.isPending}
+                className="gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {updatePinMutation.isPending ? "Saving…" : "Set USSD PIN"}
+              </Button>
+
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <h4 className="text-sm font-semibold mb-2">USSD Menu Guide</h4>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>1. Dial the USSD shortcode from your registered phone</li>
+                  <li>2. Enter your Student ID</li>
+                  <li>3. Enter your 4-digit PIN</li>
+                  <li>4. Choose from: Results, Payments, Courses, Notices</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

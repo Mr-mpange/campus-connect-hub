@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN ussd_pin TEXT DEFAULT NULL;

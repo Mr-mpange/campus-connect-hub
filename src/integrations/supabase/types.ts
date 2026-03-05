@@ -277,6 +277,7 @@ export type Database = {
           student_id: string | null
           updated_at: string
           user_id: string
+          ussd_pin: string | null
           year_of_study: number | null
         }
         Insert: {
@@ -290,6 +291,7 @@ export type Database = {
           student_id?: string | null
           updated_at?: string
           user_id: string
+          ussd_pin?: string | null
           year_of_study?: number | null
         }
         Update: {
@@ -303,6 +305,7 @@ export type Database = {
           student_id?: string | null
           updated_at?: string
           user_id?: string
+          ussd_pin?: string | null
           year_of_study?: number | null
         }
         Relationships: [
