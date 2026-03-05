@@ -22,6 +22,7 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import HodDashboard from "./pages/dashboards/HodDashboard";
 import PaymentVerification from "./pages/PaymentVerification";
+import UssdSimulator from "./pages/UssdSimulator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
