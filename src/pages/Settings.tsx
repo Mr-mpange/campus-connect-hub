@@ -34,6 +34,8 @@ const Settings = () => {
   const [phone, setPhone] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [ussdPin, setUssdPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
 
   // Properly sync form when profile loads
   useEffect(() => {
