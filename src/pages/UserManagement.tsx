@@ -105,6 +105,20 @@ const UserManagement = () => {
     onError: (e) => toast.error(e.message),
   });
 
+  const resetPinMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ ussd_pin: null } as any)
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("USSD PIN has been reset. The user can set a new one in Settings.");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createUserMutation.mutate(form);
