@@ -166,9 +166,23 @@ const UserManagement = () => {
                 <TableCell>{u.departmentName || "—"}</TableCell>
                 <TableCell><Badge variant={u.is_active ? "default" : "secondary"}>{u.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => toggleActiveMutation.mutate({ userId: u.user_id, isActive: u.is_active })} title={u.is_active ? "Deactivate" : "Activate"}>
-                    <UserCog className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => toggleActiveMutation.mutate({ userId: u.user_id, isActive: u.is_active })} title={u.is_active ? "Deactivate" : "Activate"}>
+                      <UserCog className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm(`Reset USSD PIN for ${u.full_name}?`)) {
+                          resetPinMutation.mutate(u.user_id);
+                        }
+                      }}
+                      title="Reset USSD PIN"
+                    >
+                      <KeyRound className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
