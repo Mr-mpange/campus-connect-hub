@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, UserCog } from "lucide-react";
+import { Plus, UserCog, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 
@@ -105,6 +105,20 @@ const UserManagement = () => {
     onError: (e) => toast.error(e.message),
   });
 
+  const resetPinMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ ussd_pin: null } as any)
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("USSD PIN has been reset. The user can set a new one in Settings.");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createUserMutation.mutate(form);
@@ -136,7 +150,7 @@ const UserManagement = () => {
               <TableHead>Role</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead className="w-32">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -152,9 +166,23 @@ const UserManagement = () => {
                 <TableCell>{u.departmentName || "—"}</TableCell>
                 <TableCell><Badge variant={u.is_active ? "default" : "secondary"}>{u.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => toggleActiveMutation.mutate({ userId: u.user_id, isActive: u.is_active })} title={u.is_active ? "Deactivate" : "Activate"}>
-                    <UserCog className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => toggleActiveMutation.mutate({ userId: u.user_id, isActive: u.is_active })} title={u.is_active ? "Deactivate" : "Activate"}>
+                      <UserCog className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm(`Reset USSD PIN for ${u.full_name}?`)) {
+                          resetPinMutation.mutate(u.user_id);
+                        }
+                      }}
+                      title="Reset USSD PIN"
+                    >
+                      <KeyRound className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
