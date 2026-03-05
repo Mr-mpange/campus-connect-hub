@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, UserCog } from "lucide-react";
+import { Plus, UserCog, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 
