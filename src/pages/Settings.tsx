@@ -103,6 +103,7 @@ const Settings = () => {
         <TabsList>
           <TabsTrigger value="profile" className="gap-2"><User className="w-4 h-4" /> Profile</TabsTrigger>
           <TabsTrigger value="security" className="gap-2"><Lock className="w-4 h-4" /> Security</TabsTrigger>
+          <TabsTrigger value="ussd" className="gap-2"><Smartphone className="w-4 h-4" /> USSD</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2"><Bell className="w-4 h-4" /> Notifications</TabsTrigger>
         </TabsList>
 
