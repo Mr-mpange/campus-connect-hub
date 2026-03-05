@@ -181,6 +181,57 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="ussd">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">USSD Access PIN</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 max-w-lg">
+              <p className="text-sm text-muted-foreground">
+                Set a 4-digit PIN to access the student portal via USSD. You can check results, payment status, registered courses, and notices from any phone.
+              </p>
+              <div className="space-y-1.5">
+                <Label>New 4-Digit PIN</Label>
+                <Input
+                  type="password"
+                  maxLength={4}
+                  value={ussdPin}
+                  onChange={(e) => setUssdPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="e.g. 1234"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Confirm PIN</Label>
+                <Input
+                  type="password"
+                  maxLength={4}
+                  value={confirmPin}
+                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="Re-enter PIN"
+                />
+              </div>
+              <Button
+                onClick={() => updatePinMutation.mutate()}
+                disabled={updatePinMutation.isPending}
+                className="gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {updatePinMutation.isPending ? "Saving…" : "Set USSD PIN"}
+              </Button>
+
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <h4 className="text-sm font-semibold mb-2">USSD Menu Guide</h4>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>1. Dial the USSD shortcode from your registered phone</li>
+                  <li>2. Enter your Student ID</li>
+                  <li>3. Enter your 4-digit PIN</li>
+                  <li>4. Choose from: Results, Payments, Courses, Notices</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="notifications">
           <Card>
             <CardHeader><CardTitle className="text-base">Notification Preferences</CardTitle></CardHeader>
