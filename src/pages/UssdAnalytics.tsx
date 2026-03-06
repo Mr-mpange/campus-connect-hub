@@ -73,10 +73,10 @@ const UssdAnalytics = () => {
       <PageHeader title="USSD Analytics" description="Usage trends, popular menus, and authentication insights" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard title="Total Sessions" value={totalSessions} icon={<Smartphone className="w-5 h-5" />} />
-        <StatCard title="Today's Sessions" value={todaySessions} icon={<Activity className="w-5 h-5" />} />
-        <StatCard title="Unique Students" value={uniqueStudents} icon={<TrendingUp className="w-5 h-5" />} />
-        <StatCard title="Failed Auth" value={failedAuth} icon={<ShieldAlert className="w-5 h-5" />} />
+        <StatCard title="Total Sessions" value={totalSessions} icon={Smartphone} />
+        <StatCard title="Today's Sessions" value={todaySessions} icon={Activity} />
+        <StatCard title="Unique Students" value={uniqueStudents} icon={TrendingUp} />
+        <StatCard title="Failed Auth" value={failedAuth} icon={ShieldAlert} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
