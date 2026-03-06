@@ -451,6 +451,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ussd_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          menu_selection: string | null
+          phone_number: string | null
+          request_text: string
+          response_text: string
+          session_ended: boolean
+          session_id: string
+          student_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_selection?: string | null
+          phone_number?: string | null
+          request_text?: string
+          response_text: string
+          session_ended?: boolean
+          session_id: string
+          student_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_selection?: string | null
+          phone_number?: string | null
+          request_text?: string
+          response_text?: string
+          session_ended?: boolean
+          session_id?: string
+          student_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
