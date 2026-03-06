@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,19 @@ import { Label } from "@/components/ui/label";
 import { GraduationCap, AlertCircle } from "lucide-react";
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Redirect when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,10 +27,9 @@ const Login = () => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
+      // Don't navigate here — the useEffect above handles it after auth state updates
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Invalid email or password.");
-    } finally {
       setLoading(false);
     }
   };
