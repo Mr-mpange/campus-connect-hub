@@ -51,6 +51,7 @@ const App = () => (
               <Route path="/payment-verification" element={<PaymentVerification />} />
               <Route path="/lecturer-assignment" element={<HodDashboard />} />
               <Route path="/ussd-simulator" element={<UssdSimulator />} />
+              <Route path="/ussd-logs" element={<UssdLogs />} />
               <Route path="/notices" element={<Notices />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/audit-log" element={<AuditLog />} />
