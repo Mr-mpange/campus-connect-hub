@@ -49,6 +49,7 @@ const navItems: NavItem[] = [
   { label: "Audit Log", icon: Shield, path: "/audit-log", roles: ["admin"] },
   { label: "USSD Simulator", icon: Smartphone, path: "/ussd-simulator", roles: ["admin"] },
   { label: "USSD Logs", icon: MessageSquare, path: "/ussd-logs", roles: ["admin"] },
+  { label: "USSD Analytics", icon: BarChart, path: "/ussd-analytics", roles: ["admin"] },
   { label: "Settings", icon: Settings, path: "/settings", roles: ["admin", "lecturer", "student", "hod"] },
 ];
 
