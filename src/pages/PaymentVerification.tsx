@@ -216,9 +216,6 @@ const PaymentVerification = () => {
           </Table>
         )}
       </div>
-    </div>
-  );
-};
 
       {/* Bulk SMS Reminder Dialog */}
       <Dialog open={bulkSmsOpen} onOpenChange={setBulkSmsOpen}>
