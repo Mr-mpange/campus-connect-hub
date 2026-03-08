@@ -92,9 +92,31 @@ const Approvals = () => {
         .in("id", resultIds);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async (_data, resultIds) => {
       qc.invalidateQueries({ queryKey: ["pending-approvals"] });
       toast.success("Results approved");
+      
+      if (sendSmsOnApprove) {
+        const group = submissions.find((s) => s.resultIds.includes(resultIds[0]));
+        if (group) {
+          setSmsLoading(true);
+          try {
+            await supabase.functions.invoke("send-sms-notification", {
+              body: {
+                type: "results_published",
+                course_id: group.resultIds[0], // We need course_id - get from results
+                academic_session: group.academicSession,
+              },
+            });
+            toast.success("SMS notifications sent to students");
+          } catch {
+            toast.error("Failed to send SMS notifications");
+          } finally {
+            setSmsLoading(false);
+          }
+        }
+      }
+      
       setSelectedResult(null);
     },
     onError: (e) => toast.error(e.message),
