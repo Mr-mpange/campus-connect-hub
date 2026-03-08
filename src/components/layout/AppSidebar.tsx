@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CreditCard,
+  Receipt,
   Library,
   UserCheck,
   Smartphone,
