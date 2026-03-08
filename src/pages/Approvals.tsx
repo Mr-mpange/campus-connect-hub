@@ -9,14 +9,17 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, XCircle, Eye } from "lucide-react";
+import { CheckCircle2, XCircle, Eye, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 const Approvals = () => {
   const qc = useQueryClient();
   const [selectedResult, setSelectedResult] = useState<string | null>(null);
   const [rejectDialogId, setRejectDialogId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [sendSmsOnApprove, setSendSmsOnApprove] = useState(true);
+  const [smsLoading, setSmsLoading] = useState(false);
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["pending-approvals"],
@@ -89,9 +92,31 @@ const Approvals = () => {
         .in("id", resultIds);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async (_data, resultIds) => {
       qc.invalidateQueries({ queryKey: ["pending-approvals"] });
       toast.success("Results approved");
+      
+      if (sendSmsOnApprove) {
+        const group = submissions.find((s) => s.resultIds.includes(resultIds[0]));
+        if (group) {
+          setSmsLoading(true);
+          try {
+            await supabase.functions.invoke("send-sms-notification", {
+              body: {
+                type: "results_published",
+                course_id: group.resultIds[0], // We need course_id - get from results
+                academic_session: group.academicSession,
+              },
+            });
+            toast.success("SMS notifications sent to students");
+          } catch {
+            toast.error("Failed to send SMS notifications");
+          } finally {
+            setSmsLoading(false);
+          }
+        }
+      }
+      
       setSelectedResult(null);
     },
     onError: (e) => toast.error(e.message),
@@ -117,6 +142,13 @@ const Approvals = () => {
   return (
     <div>
       <PageHeader title="Result Approvals" description="Review and approve submitted academic results" />
+
+      <div className="flex items-center gap-3 mb-4 p-3 bg-muted/50 rounded-lg border border-border">
+        <MessageSquare className="w-4 h-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Send SMS to students on approval</span>
+        <Switch checked={sendSmsOnApprove} onCheckedChange={setSendSmsOnApprove} />
+        {smsLoading && <span className="text-xs text-muted-foreground animate-pulse">Sending SMS…</span>}
+      </div>
 
       <div className="bg-card border border-border rounded-lg">
         <Table>

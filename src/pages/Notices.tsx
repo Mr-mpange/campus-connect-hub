@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Bell, AlertTriangle, Info, Megaphone, Trash2 } from "lucide-react";
+import { Plus, Bell, AlertTriangle, Info, Megaphone, Trash2, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 const priorityConfig: Record<string, { icon: React.ElementType; className: string; label: string }> = {
   urgent: { icon: AlertTriangle, className: "bg-destructive/10 text-destructive border-destructive/20", label: "Urgent" },
@@ -35,6 +36,7 @@ const Notices = () => {
   const isAdmin = user?.role === "admin";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<NoticeForm>(emptyForm);
+  const [sendSmsOnCreate, setSendSmsOnCreate] = useState(true);
 
   const { data: notices = [], isLoading } = useQuery({
     queryKey: ["notices"],
@@ -61,9 +63,35 @@ const Notices = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       qc.invalidateQueries({ queryKey: ["notices"] });
       toast.success("Notice published");
+      
+      if (sendSmsOnCreate) {
+        try {
+          // Get the latest notice we just created
+          const { data: latest } = await supabase
+            .from("notices")
+            .select("id, target_role")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+          
+          if (latest) {
+            await supabase.functions.invoke("send-sms-notification", {
+              body: {
+                type: "notice",
+                notice_id: latest.id,
+                target_role: latest.target_role || undefined,
+              },
+            });
+            toast.success("SMS notifications sent");
+          }
+        } catch {
+          toast.error("Failed to send SMS notifications");
+        }
+      }
+      
       setDialogOpen(false);
       setForm(emptyForm);
     },
@@ -171,9 +199,14 @@ const Notices = () => {
                 </Select>
               </div>
             </div>
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border border-border">
+              <MessageSquare className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Send SMS to targeted audience</span>
+              <Switch checked={sendSmsOnCreate} onCheckedChange={setSendSmsOnCreate} />
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={createMutation.isPending}>{createMutation.isPending ? "Posting…" : "Post"}</Button>
+              <Button type="submit" disabled={createMutation.isPending}>{createMutation.isPending ? "Posting…" : "Post & Notify"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

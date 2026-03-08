@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard, CheckCircle2, Clock, Search, Banknote } from "lucide-react";
+import { CreditCard, CheckCircle2, Clock, Search, Banknote, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const paymentTypeLabels: Record<string, string> = {
   tuition: "Tuition",
@@ -22,6 +23,8 @@ const PaymentVerification = () => {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [bulkSmsOpen, setBulkSmsOpen] = useState(false);
+  const [bulkSmsLoading, setBulkSmsLoading] = useState(false);
 
   const { data: payments = [], isLoading } = useQuery({
     queryKey: ["admin-payments", statusFilter],
@@ -101,7 +104,11 @@ const PaymentVerification = () => {
 
   return (
     <div>
-      <PageHeader title="Payment Verification" description="Review and verify student payments" />
+      <PageHeader title="Payment Verification" description="Review and verify student payments">
+        <Button size="sm" variant="outline" className="gap-2" onClick={() => setBulkSmsOpen(true)}>
+          <MessageSquare className="w-4 h-4" /> Send Payment Reminders
+        </Button>
+      </PageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard title="Total Amount" value={`TZS ${totalAmount.toLocaleString()}`} icon={Banknote} />
@@ -209,6 +216,45 @@ const PaymentVerification = () => {
           </Table>
         )}
       </div>
+
+      {/* Bulk SMS Reminder Dialog */}
+      <Dialog open={bulkSmsOpen} onOpenChange={setBulkSmsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Bulk Payment Reminders</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This will send an SMS reminder to all students with <strong>pending</strong> payments.
+            {pendingCount > 0 ? ` ${pendingCount} student(s) will be notified.` : " No pending payments found."}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkSmsOpen(false)}>Cancel</Button>
+            <Button
+              disabled={pendingCount === 0 || bulkSmsLoading}
+              onClick={async () => {
+                setBulkSmsLoading(true);
+                try {
+                  const pendingPayments = payments.filter((p) => p.status === "pending");
+                  const studentIds = [...new Set(pendingPayments.map((p) => p.student_id))];
+                  await supabase.functions.invoke("send-sms-notification", {
+                    body: { type: "payment_reminder", student_ids: studentIds },
+                  });
+                  toast.success(`Payment reminders sent to ${studentIds.length} student(s)`);
+                  setBulkSmsOpen(false);
+                } catch {
+                  toast.error("Failed to send SMS reminders");
+                } finally {
+                  setBulkSmsLoading(false);
+                }
+              }}
+              className="gap-2"
+            >
+              <MessageSquare className="w-4 h-4" />
+              {bulkSmsLoading ? "Sending…" : "Send Reminders"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
