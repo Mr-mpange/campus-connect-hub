@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard, CheckCircle2, Clock, Search, Banknote } from "lucide-react";
+import { CreditCard, CheckCircle2, Clock, Search, Banknote, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const paymentTypeLabels: Record<string, string> = {
   tuition: "Tuition",
