@@ -1,14 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      },
+    });
   }
 
   const serviceClient = createClient(
@@ -20,7 +19,7 @@ Deno.serve(async (req) => {
     const formData = await req.formData();
     const sessionId = formData.get("sessionId") as string;
     const phoneNumber = formData.get("phoneNumber") as string;
-    const text = formData.get("text") as string || "";
+    const text = (formData.get("text") as string) || "";
 
     const parts = text.split("*");
     const level = parts.length;
@@ -65,15 +64,23 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (profileErr || !profile) {
-      return await logAndRespond("END Student ID not found. Please check and try again.", { studentId: studentIdInput });
+      return await logAndRespond("END Student ID not found. Please check and try again.", {
+        studentId: studentIdInput,
+      });
     }
 
     if (!profile.ussd_pin) {
-      return await logAndRespond("END USSD PIN not set. Please set your PIN in the web portal under Settings.", { studentId: studentIdInput, userId: profile.user_id });
+      return await logAndRespond(
+        "END USSD PIN not set. Please set your PIN in the web portal under Settings.",
+        { studentId: studentIdInput, userId: profile.user_id }
+      );
     }
 
     if (profile.ussd_pin !== pinInput) {
-      return await logAndRespond("END Incorrect PIN. Please try again.", { studentId: studentIdInput, userId: profile.user_id });
+      return await logAndRespond("END Incorrect PIN. Please try again.", {
+        studentId: studentIdInput,
+        userId: profile.user_id,
+      });
     }
 
     const userId = profile.user_id;
@@ -82,18 +89,20 @@ Deno.serve(async (req) => {
     // Level 2: Main menu
     if (level === 2) {
       return await logAndRespond(
-        `CON Welcome ${profile.full_name}!\n1. Check Results\n2. Payment Status\n3. Registered Courses\n4. Notices\n0. Exit`,
+        `CON Welcome ${profile.full_name}!\n1. Check Results\n2. Payment Status\n3. Registered Courses\n4. Notices\n5. Change PIN\n0. Exit`,
         { ...logOpts, menu: "main_menu" }
       );
     }
 
     const menuChoice = parts[2];
-    const menuLabels: Record<string, string> = { "1": "results", "2": "payments", "3": "courses", "4": "notices", "0": "exit" };
 
-    // 1. CHECK RESULTS
+    // ── 1. CHECK RESULTS ──
     if (menuChoice === "1") {
       if (level === 3) {
-        return await logAndRespond("CON Enter Academic Session (e.g. 2024/2025):", { ...logOpts, menu: "results" });
+        return await logAndRespond("CON Enter Academic Session (e.g. 2024/2025):", {
+          ...logOpts,
+          menu: "results",
+        });
       }
 
       const session = parts[3];
@@ -105,11 +114,15 @@ Deno.serve(async (req) => {
         .in("status", ["approved", "published"]);
 
       if (!results || results.length === 0) {
-        return await logAndRespond(`END No published results found for session ${session}.`, { ...logOpts, menu: "results" });
+        return await logAndRespond(`END No published results found for session ${session}.`, {
+          ...logOpts,
+          menu: "results",
+        });
       }
 
       let msg = `Results for ${session}:\n`;
-      let totalPoints = 0, totalCredits = 0;
+      let totalPoints = 0,
+        totalCredits = 0;
       const gradePoints: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
 
       for (const r of results) {
@@ -126,7 +139,7 @@ Deno.serve(async (req) => {
       return await logAndRespond(`END ${msg}`, { ...logOpts, menu: "results", ended: true });
     }
 
-    // 2. PAYMENT STATUS
+    // ── 2. PAYMENT STATUS ──
     if (menuChoice === "2") {
       const { data: payments } = await serviceClient
         .from("payments")
@@ -139,7 +152,12 @@ Deno.serve(async (req) => {
         return await logAndRespond("END No payments found.", { ...logOpts, menu: "payments" });
       }
 
-      const typeLabels: Record<string, string> = { tuition: "Tuition", exam: "Exam", registration: "Reg", retake: "Retake" };
+      const typeLabels: Record<string, string> = {
+        tuition: "Tuition",
+        exam: "Exam",
+        registration: "Reg",
+        retake: "Retake",
+      };
       let msg = "Recent Payments:\n";
       for (const p of payments) {
         const type = typeLabels[p.payment_type] || p.payment_type;
@@ -149,7 +167,7 @@ Deno.serve(async (req) => {
       return await logAndRespond(`END ${msg}`, { ...logOpts, menu: "payments" });
     }
 
-    // 3. REGISTERED COURSES
+    // ── 3. REGISTERED COURSES ──
     if (menuChoice === "3") {
       const { data: courses } = await serviceClient
         .from("student_courses")
@@ -159,7 +177,10 @@ Deno.serve(async (req) => {
         .limit(10);
 
       if (!courses || courses.length === 0) {
-        return await logAndRespond("END No registered courses found.", { ...logOpts, menu: "courses" });
+        return await logAndRespond("END No registered courses found.", {
+          ...logOpts,
+          menu: "courses",
+        });
       }
 
       let msg = "Registered Courses:\n";
@@ -170,7 +191,7 @@ Deno.serve(async (req) => {
       return await logAndRespond(`END ${msg}`, { ...logOpts, menu: "courses" });
     }
 
-    // 4. NOTICES
+    // ── 4. NOTICES ──
     if (menuChoice === "4") {
       const { data: notices } = await serviceClient
         .from("notices")
@@ -191,9 +212,78 @@ Deno.serve(async (req) => {
       return await logAndRespond(`END ${msg}`, { ...logOpts, menu: "notices" });
     }
 
-    // 0. EXIT
+    // ── 5. CHANGE PIN ──
+    if (menuChoice === "5") {
+      // Step 1: Ask for new PIN
+      if (level === 3) {
+        return await logAndRespond("CON Enter new 4-digit PIN:", {
+          ...logOpts,
+          menu: "change_pin",
+        });
+      }
+
+      const newPin = parts[3];
+
+      // Step 2: Confirm new PIN
+      if (level === 4) {
+        // Validate new PIN format
+        if (!/^\d{4}$/.test(newPin)) {
+          return await logAndRespond("END Invalid PIN. Must be exactly 4 digits.", {
+            ...logOpts,
+            menu: "change_pin",
+          });
+        }
+        return await logAndRespond("CON Confirm new PIN (enter again):", {
+          ...logOpts,
+          menu: "change_pin",
+        });
+      }
+
+      const confirmPin = parts[4];
+
+      // Step 3: Validate and save
+      if (level === 5) {
+        if (newPin !== confirmPin) {
+          return await logAndRespond("END PINs do not match. Please try again.", {
+            ...logOpts,
+            menu: "change_pin",
+          });
+        }
+
+        if (!/^\d{4}$/.test(newPin)) {
+          return await logAndRespond("END Invalid PIN. Must be exactly 4 digits.", {
+            ...logOpts,
+            menu: "change_pin",
+          });
+        }
+
+        // Update PIN in database
+        const { error: updateErr } = await serviceClient
+          .from("profiles")
+          .update({ ussd_pin: newPin })
+          .eq("user_id", userId);
+
+        if (updateErr) {
+          return await logAndRespond("END Failed to update PIN. Please try again later.", {
+            ...logOpts,
+            menu: "change_pin",
+          });
+        }
+
+        return await logAndRespond("END PIN changed successfully!", {
+          ...logOpts,
+          menu: "change_pin",
+          ended: true,
+        });
+      }
+    }
+
+    // ── 0. EXIT ──
     if (menuChoice === "0") {
-      return await logAndRespond("END Thank you for using the Student Portal. Goodbye!", { ...logOpts, menu: "exit" });
+      return await logAndRespond("END Thank you for using the Student Portal. Goodbye!", {
+        ...logOpts,
+        menu: "exit",
+      });
     }
 
     return await logAndRespond("END Invalid selection. Please try again.", logOpts);
