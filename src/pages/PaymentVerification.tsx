@@ -23,6 +23,8 @@ const PaymentVerification = () => {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [bulkSmsOpen, setBulkSmsOpen] = useState(false);
+  const [bulkSmsLoading, setBulkSmsLoading] = useState(false);
 
   const { data: payments = [], isLoading } = useQuery({
     queryKey: ["admin-payments", statusFilter],
