@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Departments from "./pages/Departments";
 import UserManagement from "./pages/UserManagement";
