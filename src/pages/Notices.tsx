@@ -63,9 +63,35 @@ const Notices = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       qc.invalidateQueries({ queryKey: ["notices"] });
       toast.success("Notice published");
+      
+      if (sendSmsOnCreate) {
+        try {
+          // Get the latest notice we just created
+          const { data: latest } = await supabase
+            .from("notices")
+            .select("id, target_role")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+          
+          if (latest) {
+            await supabase.functions.invoke("send-sms-notification", {
+              body: {
+                type: "notice",
+                notice_id: latest.id,
+                target_role: latest.target_role || undefined,
+              },
+            });
+            toast.success("SMS notifications sent");
+          }
+        } catch {
+          toast.error("Failed to send SMS notifications");
+        }
+      }
+      
       setDialogOpen(false);
       setForm(emptyForm);
     },
