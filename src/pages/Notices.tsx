@@ -36,6 +36,7 @@ const Notices = () => {
   const isAdmin = user?.role === "admin";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<NoticeForm>(emptyForm);
+  const [sendSmsOnCreate, setSendSmsOnCreate] = useState(true);
 
   const { data: notices = [], isLoading } = useQuery({
     queryKey: ["notices"],
