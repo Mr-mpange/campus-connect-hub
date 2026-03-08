@@ -58,6 +58,8 @@ const App = () => (
               <Route path="/my-courses" element={<MyCourses />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/payment-verification" element={<PaymentVerification />} />
+              <Route path="/payment-receipt" element={<PaymentReceipt />} />
+              <Route path="/payment-analytics" element={<PaymentAnalytics />} />
               <Route path="/lecturer-assignment" element={<HodDashboard />} />
               <Route path="/ussd-simulator" element={<UssdSimulator />} />
               <Route path="/ussd-logs" element={<UssdLogs />} />
