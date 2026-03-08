@@ -18,6 +18,8 @@ const Approvals = () => {
   const [selectedResult, setSelectedResult] = useState<string | null>(null);
   const [rejectDialogId, setRejectDialogId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [sendSmsOnApprove, setSendSmsOnApprove] = useState(true);
+  const [smsLoading, setSmsLoading] = useState(false);
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["pending-approvals"],
