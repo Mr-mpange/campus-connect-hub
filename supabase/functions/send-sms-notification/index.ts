@@ -6,6 +6,52 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+interface SmsRequest {
+  type: "results_published" | "payment_received" | "payment_reminder" | "notice" | "results_submitted";
+  // For results
+  course_id?: string;
+  academic_session?: string;
+  // For payments
+  student_ids?: string[];
+  // For notices
+  notice_id?: string;
+  // For targeting
+  department_id?: string;
+  target_role?: string;
+}
+
+async function sendSms(
+  recipients: string[],
+  message: string,
+  atApiKey: string,
+  atUsername: string
+) {
+  if (recipients.length === 0) return { sent: 0, atResponse: null };
+
+  const atUrl =
+    atUsername === "sandbox"
+      ? "https://api.sandbox.africastalking.com/version1/messaging"
+      : "https://api.africastalking.com/version1/messaging";
+
+  const formData = new URLSearchParams();
+  formData.append("username", atUsername);
+  formData.append("to", recipients.join(","));
+  formData.append("message", message);
+
+  const response = await fetch(atUrl, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
+      apiKey: atApiKey,
+    },
+    body: formData.toString(),
+  });
+
+  const result = await response.json();
+  return { sent: recipients.length, atResponse: result };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -36,102 +82,177 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { type, course_id, academic_session } = await req.json();
+    const body: SmsRequest = await req.json();
+    const { type } = body;
 
-    // Use service role to fetch student data
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get course info
-    const { data: course } = await serviceClient
-      .from("courses")
-      .select("code, title")
-      .eq("id", course_id)
-      .single();
-
-    // Get students with results for this course
-    const { data: results } = await serviceClient
-      .from("results")
-      .select("student_id")
-      .eq("course_id", course_id)
-      .eq("academic_session", academic_session);
-
-    if (!results || results.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "No students to notify", sent: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const studentIds = [...new Set(results.map((r: any) => r.student_id))];
-
-    // Get phone numbers from profiles
-    const { data: profiles } = await serviceClient
-      .from("profiles")
-      .select("user_id, phone, full_name")
-      .in("user_id", studentIds);
-
-    const phoneNumbers = (profiles || [])
-      .filter((p: any) => p.phone)
-      .map((p: any) => ({ phone: p.phone, name: p.full_name }));
-
-    if (phoneNumbers.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "No students with phone numbers", sent: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Send SMS via Africa's Talking
     const atApiKey = Deno.env.get("AFRICASTALKING_API_KEY")!;
     const atUsername = Deno.env.get("AFRICASTALKING_USERNAME")!;
 
-    const message =
-      type === "published"
-        ? `Your results for ${course?.code || ""} - ${course?.title || ""} (${academic_session}) have been published. Check your student portal.`
-        : `Results for ${course?.code || ""} - ${course?.title || ""} (${academic_session}) have been submitted for approval.`;
+    if (!atApiKey || !atUsername) {
+      return new Response(
+        JSON.stringify({ error: "Africa's Talking credentials not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    const recipients = phoneNumbers.map((p: any) => p.phone).join(",");
+    // ── RESULTS PUBLISHED / SUBMITTED ──
+    if (type === "results_published" || type === "results_submitted") {
+      const { course_id, academic_session } = body;
 
-    const atUrl =
-      atUsername === "sandbox"
-        ? "https://api.sandbox.africastalking.com/version1/messaging"
-        : "https://api.africastalking.com/version1/messaging";
+      const { data: course } = await serviceClient
+        .from("courses")
+        .select("code, title")
+        .eq("id", course_id!)
+        .single();
 
-    const formData = new URLSearchParams();
-    formData.append("username", atUsername);
-    formData.append("to", recipients);
-    formData.append("message", message);
+      const { data: results } = await serviceClient
+        .from("results")
+        .select("student_id")
+        .eq("course_id", course_id!)
+        .eq("academic_session", academic_session!);
 
-    const atResponse = await fetch(atUrl, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-        apiKey: atApiKey,
-      },
-      body: formData.toString(),
-    });
+      if (!results || results.length === 0) {
+        return new Response(
+          JSON.stringify({ message: "No students to notify", sent: 0 }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    const atResult = await atResponse.json();
+      const studentIds = [...new Set(results.map((r: any) => r.student_id))];
+      const { data: profiles } = await serviceClient
+        .from("profiles")
+        .select("phone")
+        .in("user_id", studentIds);
+
+      const phones = (profiles || []).filter((p: any) => p.phone).map((p: any) => p.phone);
+
+      const message =
+        type === "results_published"
+          ? `[UniSIMS] Results for ${course?.code} - ${course?.title} (${academic_session}) are now published. Dial *123# or visit the portal to view.`
+          : `[UniSIMS] Results for ${course?.code} - ${course?.title} (${academic_session}) have been submitted for review.`;
+
+      const result = await sendSms(phones, message, atApiKey, atUsername);
+      return new Response(JSON.stringify({ message: "SMS sent", ...result }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── PAYMENT RECEIVED ──
+    if (type === "payment_received") {
+      const { student_ids } = body;
+      if (!student_ids || student_ids.length === 0) {
+        return new Response(
+          JSON.stringify({ message: "No students specified", sent: 0 }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: profiles } = await serviceClient
+        .from("profiles")
+        .select("phone")
+        .in("user_id", student_ids);
+
+      const phones = (profiles || []).filter((p: any) => p.phone).map((p: any) => p.phone);
+
+      const message =
+        "[UniSIMS] Your payment has been received and verified. Dial *123# or visit the portal for details.";
+
+      const result = await sendSms(phones, message, atApiKey, atUsername);
+      return new Response(JSON.stringify({ message: "SMS sent", ...result }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── PAYMENT REMINDER ──
+    if (type === "payment_reminder") {
+      const { student_ids } = body;
+      if (!student_ids || student_ids.length === 0) {
+        return new Response(
+          JSON.stringify({ message: "No students specified", sent: 0 }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: profiles } = await serviceClient
+        .from("profiles")
+        .select("phone")
+        .in("user_id", student_ids);
+
+      const phones = (profiles || []).filter((p: any) => p.phone).map((p: any) => p.phone);
+
+      const message =
+        "[UniSIMS] Reminder: You have a pending fee payment. Please pay before the deadline. Dial *123# or visit the portal.";
+
+      const result = await sendSms(phones, message, atApiKey, atUsername);
+      return new Response(JSON.stringify({ message: "SMS sent", ...result }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── NOTICE BROADCAST ──
+    if (type === "notice") {
+      const { notice_id, department_id, target_role } = body;
+
+      // Get the notice
+      const { data: notice } = await serviceClient
+        .from("notices")
+        .select("title, content, priority")
+        .eq("id", notice_id!)
+        .single();
+
+      if (!notice) {
+        return new Response(
+          JSON.stringify({ error: "Notice not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Build query for target profiles
+      let profileQuery = serviceClient.from("profiles").select("phone");
+
+      if (department_id) {
+        profileQuery = profileQuery.eq("department_id", department_id);
+      }
+
+      // If targeting a specific role, get user IDs with that role first
+      if (target_role) {
+        const { data: roleUsers } = await serviceClient
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", target_role);
+
+        if (roleUsers && roleUsers.length > 0) {
+          const userIds = roleUsers.map((r: any) => r.user_id);
+          profileQuery = profileQuery.in("user_id", userIds);
+        }
+      }
+
+      const { data: profiles } = await profileQuery;
+      const phones = (profiles || []).filter((p: any) => p.phone).map((p: any) => p.phone);
+
+      const urgentTag = notice.priority === "urgent" ? "[URGENT] " : "";
+      const message = `[UniSIMS] ${urgentTag}${notice.title}\n${notice.content.substring(0, 120)}`;
+
+      const result = await sendSms(phones, message, atApiKey, atUsername);
+      return new Response(JSON.stringify({ message: "SMS sent", ...result }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(
-      JSON.stringify({
-        message: "SMS notifications sent",
-        sent: phoneNumbers.length,
-        atResponse: atResult,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: `Unknown notification type: ${type}` }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    console.error("SMS Error:", err);
     return new Response(
-      JSON.stringify({ error: err.message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ error: (err as Error).message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
