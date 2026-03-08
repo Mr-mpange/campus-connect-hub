@@ -5,7 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GraduationCap, AlertCircle, CheckCircle2 } from "lucide-react";
+
+interface Department {
+  id: string;
+  name: string;
+  code: string;
+}
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -13,11 +20,25 @@ const Signup = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [studentId, setStudentId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+
+  // Fetch departments
+  useEffect(() => {
+    supabase
+      .from("departments")
+      .select("id, name, code")
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data }) => {
+        if (data) setDepartments(data);
+      });
+  }, []);
 
   // Redirect when authenticated (auto-confirm case)
   useEffect(() => {
@@ -42,6 +63,10 @@ const Signup = () => {
       setError("Student ID is required.");
       return;
     }
+    if (!departmentId) {
+      setError("Please select a department.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -53,6 +78,7 @@ const Signup = () => {
           data: {
             full_name: fullName.trim(),
             student_id: studentId.trim(),
+            department_id: departmentId,
           },
         },
       });
@@ -148,6 +174,21 @@ const Signup = () => {
                     onChange={(e) => setStudentId(e.target.value)}
                     required
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Department</Label>
+                  <Select value={departmentId} onValueChange={setDepartmentId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name} ({dept.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="email">Email</Label>
