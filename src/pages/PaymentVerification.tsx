@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/shared/PageHeader";
 import StatCard from "@/components/shared/StatCard";
@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard, CheckCircle2, Clock, Search, Banknote, MessageSquare } from "lucide-react";
-import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { CheckCircle2, Clock, Search, Banknote, AlertCircle, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
 
 const paymentTypeLabels: Record<string, string> = {
   tuition: "Tuition",
@@ -20,7 +20,6 @@ const paymentTypeLabels: Record<string, string> = {
 };
 
 const PaymentVerification = () => {
-  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [bulkSmsOpen, setBulkSmsOpen] = useState(false);
@@ -42,50 +41,6 @@ const PaymentVerification = () => {
     },
   });
 
-  const sendPaymentNotification = async (paymentId: string, action: string) => {
-    try {
-      await supabase.functions.invoke("payment-notification", {
-        body: { payment_id: paymentId, action },
-      });
-    } catch (err) {
-      console.warn("SMS notification failed:", err);
-    }
-  };
-
-  const markPaidMutation = useMutation({
-    mutationFn: async (paymentId: string) => {
-      const { error } = await supabase
-        .from("payments")
-        .update({ status: "paid", paid_at: new Date().toISOString() })
-        .eq("id", paymentId);
-      if (error) throw error;
-      return paymentId;
-    },
-    onSuccess: (paymentId) => {
-      qc.invalidateQueries({ queryKey: ["admin-payments"] });
-      toast.success("Payment verified — SMS notification sent to student");
-      sendPaymentNotification(paymentId, "paid");
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const markCancelledMutation = useMutation({
-    mutationFn: async (paymentId: string) => {
-      const { error } = await supabase
-        .from("payments")
-        .update({ status: "cancelled" })
-        .eq("id", paymentId);
-      if (error) throw error;
-      return paymentId;
-    },
-    onSuccess: (paymentId) => {
-      qc.invalidateQueries({ queryKey: ["admin-payments"] });
-      toast.success("Payment cancelled — SMS notification sent to student");
-      sendPaymentNotification(paymentId, "cancelled");
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
   const filtered = payments.filter((p) => {
     if (!search) return true;
     const q = search.toLowerCase();
@@ -99,21 +54,23 @@ const PaymentVerification = () => {
   });
 
   const totalAmount = payments.reduce((s, p) => s + Number(p.amount), 0);
+  const paidTotal = payments.filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0);
   const paidCount = payments.filter((p) => p.status === "paid").length;
   const pendingCount = payments.filter((p) => p.status === "pending").length;
 
   return (
     <div>
-      <PageHeader title="Payment Verification" description="Review and verify student payments">
+      <PageHeader title="Payment Monitoring" description="Track student payments — verified automatically when paid via control number">
         <Button size="sm" variant="outline" className="gap-2" onClick={() => setBulkSmsOpen(true)}>
           <MessageSquare className="w-4 h-4" /> Send Payment Reminders
         </Button>
       </PageHeader>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard title="Total Amount" value={`TZS ${totalAmount.toLocaleString()}`} icon={Banknote} />
-        <StatCard title="Verified" value={paidCount.toString()} icon={CheckCircle2} subtitle="payments" />
-        <StatCard title="Pending" value={pendingCount.toString()} icon={Clock} subtitle="awaiting verification" />
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+        <StatCard title="Total Billed" value={`TZS ${totalAmount.toLocaleString()}`} icon={Banknote} />
+        <StatCard title="Total Collected" value={`TZS ${paidTotal.toLocaleString()}`} icon={CheckCircle2} />
+        <StatCard title="Verified" value={paidCount.toString()} icon={CheckCircle2} subtitle="auto-confirmed" />
+        <StatCard title="Pending" value={pendingCount.toString()} icon={Clock} subtitle="awaiting payment" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -155,7 +112,7 @@ const PaymentVerification = () => {
                 <TableHead>Session</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Paid At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -177,7 +134,7 @@ const PaymentVerification = () => {
                       {p.status === "paid" ? (
                         <Badge variant="default" className="gap-1"><CheckCircle2 className="w-3 h-3" /> Paid</Badge>
                       ) : p.status === "cancelled" ? (
-                        <Badge variant="destructive">Cancelled</Badge>
+                        <Badge variant="destructive" className="gap-1"><AlertCircle className="w-3 h-3" /> Cancelled</Badge>
                       ) : (
                         <Badge variant="secondary" className="gap-1"><Clock className="w-3 h-3" /> Pending</Badge>
                       )}
@@ -185,29 +142,8 @@ const PaymentVerification = () => {
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(p.created_at).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
-                      {p.status === "pending" && (
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="text-xs"
-                            onClick={() => markPaidMutation.mutate(p.id)}
-                            disabled={markPaidMutation.isPending}
-                          >
-                            Verify
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs"
-                            onClick={() => markCancelledMutation.mutate(p.id)}
-                            disabled={markCancelledMutation.isPending}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      )}
+                    <TableCell className="text-xs text-muted-foreground">
+                      {p.paid_at ? new Date(p.paid_at).toLocaleString() : "—"}
                     </TableCell>
                   </TableRow>
                 );
