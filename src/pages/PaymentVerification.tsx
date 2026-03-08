@@ -104,7 +104,11 @@ const PaymentVerification = () => {
 
   return (
     <div>
-      <PageHeader title="Payment Verification" description="Review and verify student payments" />
+      <PageHeader title="Payment Verification" description="Review and verify student payments">
+        <Button size="sm" variant="outline" className="gap-2" onClick={() => setBulkSmsOpen(true)}>
+          <MessageSquare className="w-4 h-4" /> Send Payment Reminders
+        </Button>
+      </PageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard title="Total Amount" value={`TZS ${totalAmount.toLocaleString()}`} icon={Banknote} />
