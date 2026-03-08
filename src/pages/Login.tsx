@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -113,6 +114,14 @@ const Login = () => {
               {loading ? "Signing in…" : "Sign In"}
             </Button>
           </form>
+          <div className="mt-4 text-center">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Forgot your password?
+            </Link>
+          </div>
         </div>
       </div>
     </div>
