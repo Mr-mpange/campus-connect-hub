@@ -199,9 +199,14 @@ const Notices = () => {
                 </Select>
               </div>
             </div>
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border border-border">
+              <MessageSquare className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Send SMS to targeted audience</span>
+              <Switch checked={sendSmsOnCreate} onCheckedChange={setSendSmsOnCreate} />
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={createMutation.isPending}>{createMutation.isPending ? "Posting…" : "Post"}</Button>
+              <Button type="submit" disabled={createMutation.isPending}>{createMutation.isPending ? "Posting…" : "Post & Notify"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

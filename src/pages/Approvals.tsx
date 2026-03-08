@@ -143,6 +143,13 @@ const Approvals = () => {
     <div>
       <PageHeader title="Result Approvals" description="Review and approve submitted academic results" />
 
+      <div className="flex items-center gap-3 mb-4 p-3 bg-muted/50 rounded-lg border border-border">
+        <MessageSquare className="w-4 h-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Send SMS to students on approval</span>
+        <Switch checked={sendSmsOnApprove} onCheckedChange={setSendSmsOnApprove} />
+        {smsLoading && <span className="text-xs text-muted-foreground animate-pulse">Sending SMS…</span>}
+      </div>
+
       <div className="bg-card border border-border rounded-lg">
         <Table>
           <TableHeader>

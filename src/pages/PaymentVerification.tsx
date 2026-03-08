@@ -220,4 +220,46 @@ const PaymentVerification = () => {
   );
 };
 
+      {/* Bulk SMS Reminder Dialog */}
+      <Dialog open={bulkSmsOpen} onOpenChange={setBulkSmsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Bulk Payment Reminders</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This will send an SMS reminder to all students with <strong>pending</strong> payments.
+            {pendingCount > 0 ? ` ${pendingCount} student(s) will be notified.` : " No pending payments found."}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkSmsOpen(false)}>Cancel</Button>
+            <Button
+              disabled={pendingCount === 0 || bulkSmsLoading}
+              onClick={async () => {
+                setBulkSmsLoading(true);
+                try {
+                  const pendingPayments = payments.filter((p) => p.status === "pending");
+                  const studentIds = [...new Set(pendingPayments.map((p) => p.student_id))];
+                  await supabase.functions.invoke("send-sms-notification", {
+                    body: { type: "payment_reminder", student_ids: studentIds },
+                  });
+                  toast.success(`Payment reminders sent to ${studentIds.length} student(s)`);
+                  setBulkSmsOpen(false);
+                } catch {
+                  toast.error("Failed to send SMS reminders");
+                } finally {
+                  setBulkSmsLoading(false);
+                }
+              }}
+              className="gap-2"
+            >
+              <MessageSquare className="w-4 h-4" />
+              {bulkSmsLoading ? "Sending…" : "Send Reminders"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
 export default PaymentVerification;
