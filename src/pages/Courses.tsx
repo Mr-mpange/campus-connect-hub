@@ -126,7 +126,7 @@ const Courses = () => {
         </div>
       </PageHeader>
 
-      <div className="bg-card border border-border rounded-lg">
+      <div className="bg-card border border-border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

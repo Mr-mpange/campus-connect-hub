@@ -90,7 +90,7 @@ const AuditLog = () => {
         <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-44" />
       </div>
 
-      <div className="bg-card border border-border rounded-lg">
+      <div className="bg-card border border-border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
