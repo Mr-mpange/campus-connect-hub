@@ -68,7 +68,7 @@ const UssdLogs = () => {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-lg">
+      <div className="bg-card border border-border rounded-lg overflow-x-auto">
         <ScrollArea className="h-[600px]">
           <Table>
             <TableHeader>

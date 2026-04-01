@@ -89,7 +89,7 @@ const Departments = () => {
         <Button onClick={openCreate} size="sm"><Plus className="w-4 h-4 mr-1" /> Add Department</Button>
       </PageHeader>
 
-      <div className="bg-card border border-border rounded-lg">
+      <div className="bg-card border border-border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

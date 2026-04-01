@@ -150,7 +150,7 @@ const Approvals = () => {
         {smsLoading && <span className="text-xs text-muted-foreground animate-pulse">Sending SMS…</span>}
       </div>
 
-      <div className="bg-card border border-border rounded-lg">
+      <div className="bg-card border border-border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
