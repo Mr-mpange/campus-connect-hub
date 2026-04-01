@@ -151,6 +151,7 @@ const PaymentVerification = () => {
               })}
             </TableBody>
           </Table>
+          </div>
         )}
       </div>
 

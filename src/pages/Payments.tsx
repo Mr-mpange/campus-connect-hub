@@ -189,6 +189,7 @@ const Payments = () => {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </div>
     </div>
