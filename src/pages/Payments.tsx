@@ -143,7 +143,7 @@ const Payments = () => {
         </CardContent>
       </Card>
 
-      <div className="bg-card border border-border rounded-lg">
+      <div className="bg-card border border-border rounded-lg overflow-x-auto">
         <div className="p-4 border-b border-border">
           <h2 className="text-sm font-semibold text-foreground">Payment History</h2>
         </div>
@@ -152,6 +152,7 @@ const Payments = () => {
         ) : payments.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground text-sm">No payments yet.</div>
         ) : (
+          <div className="min-w-[600px]">
           <Table>
             <TableHeader>
               <TableRow>
