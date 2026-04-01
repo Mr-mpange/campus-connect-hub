@@ -1,27 +1,10 @@
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Users,
-  BookOpen,
-  FileText,
-  Bell,
-  Settings,
-  Building2,
-  ClipboardCheck,
-  GraduationCap,
-  BarChart3,
-  Shield,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  CreditCard,
-  Receipt,
-  Library,
-  UserCheck,
-  Smartphone,
-  MessageSquare,
-  BarChart,
+  LayoutDashboard, Users, BookOpen, FileText, Bell, Settings, Building2,
+  ClipboardCheck, GraduationCap, BarChart3, Shield, LogOut, ChevronLeft,
+  ChevronRight, CreditCard, Receipt, Library, UserCheck, Smartphone,
+  MessageSquare, BarChart,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -56,7 +39,11 @@ const navItems: NavItem[] = [
   { label: "Settings", icon: Settings, path: "/settings", roles: ["admin", "lecturer", "student", "hod"] },
 ];
 
-const AppSidebar = () => {
+interface AppSidebarProps {
+  onNavigate?: () => void;
+}
+
+const AppSidebar = ({ onNavigate }: AppSidebarProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,14 +52,22 @@ const AppSidebar = () => {
   if (!user) return null;
 
   const filteredItems = navItems.filter((item) => item.roles.includes(user.role));
-
   const roleLabel = user.role === "admin" ? "Administrator" : user.role === "hod" ? "Head of Dept." : user.role === "lecturer" ? "Lecturer" : "Student";
+
+  const handleNav = (path: string) => {
+    navigate(path);
+    onNavigate?.();
+  };
+
+  // When used inside Sheet (mobile), always expanded
+  const isCollapsed = onNavigate ? false : collapsed;
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 z-50",
-        collapsed ? "w-[68px]" : "w-[260px]"
+        "h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 z-50",
+        onNavigate ? "w-full" : "fixed left-0 top-0",
+        onNavigate ? "" : isCollapsed ? "w-[68px]" : "w-[260px]"
       )}
     >
       {/* Header */}
@@ -80,7 +75,7 @@ const AppSidebar = () => {
         <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center flex-shrink-0">
           <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
         </div>
-        {!collapsed && (
+        {!isCollapsed && (
           <div className="overflow-hidden">
             <h1 className="text-sm font-bold tracking-tight text-sidebar-foreground truncate">UniSIMS</h1>
             <p className="text-[10px] text-sidebar-muted truncate">Student Information System</p>
@@ -89,8 +84,8 @@ const AppSidebar = () => {
       </div>
 
       {/* User Info */}
-      <div className={cn("px-4 py-3 border-b border-sidebar-border", collapsed && "px-2 py-3")}>
-        {collapsed ? (
+      <div className={cn("px-4 py-3 border-b border-sidebar-border", isCollapsed && "px-2 py-3")}>
+        {isCollapsed ? (
           <div className="w-9 h-9 mx-auto rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold text-sidebar-accent-foreground">
             {user.name.split(" ").map(n => n[0]).join("")}
           </div>
@@ -114,17 +109,17 @@ const AppSidebar = () => {
           return (
             <button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNav(item.path)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                   : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
               )}
-              title={collapsed ? item.label : undefined}
+              title={isCollapsed ? item.label : undefined}
             >
               <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
+              {!isCollapsed && <span className="truncate">{item.label}</span>}
             </button>
           );
         })}
@@ -133,20 +128,22 @@ const AppSidebar = () => {
       {/* Footer */}
       <div className="px-2 py-3 border-t border-sidebar-border space-y-0.5">
         <button
-          onClick={() => { logout(); navigate("/login"); }}
+          onClick={() => { logout(); navigate("/login"); onNavigate?.(); }}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
-          title={collapsed ? "Sign Out" : undefined}
+          title={isCollapsed ? "Sign Out" : undefined}
         >
           <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
-          {!collapsed && <span>Sign Out</span>}
+          {!isCollapsed && <span>Sign Out</span>}
         </button>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors"
-        >
-          {collapsed ? <ChevronRight className="w-[18px] h-[18px]" /> : <ChevronLeft className="w-[18px] h-[18px]" />}
-          {!collapsed && <span>Collapse</span>}
-        </button>
+        {!onNavigate && (
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground/80 transition-colors"
+          >
+            {isCollapsed ? <ChevronRight className="w-[18px] h-[18px]" /> : <ChevronLeft className="w-[18px] h-[18px]" />}
+            {!isCollapsed && <span>Collapse</span>}
+          </button>
+        )}
       </div>
     </aside>
   );
