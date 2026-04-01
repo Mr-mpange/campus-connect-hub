@@ -96,12 +96,13 @@ const PaymentVerification = () => {
         </Select>
       </div>
 
-      <div className="bg-card border border-border rounded-lg">
+      <div className="bg-card border border-border rounded-lg overflow-x-auto">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Loading…</div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground text-sm">No payments found.</div>
         ) : (
+          <div className="min-w-[800px]">
           <Table>
             <TableHeader>
               <TableRow>
