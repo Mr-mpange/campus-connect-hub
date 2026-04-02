@@ -68,18 +68,26 @@ const HodDashboard = () => {
 
   // Fetch existing allocations
   const { data: allocations = [] } = useQuery({
-    queryKey: ["hod-allocations", user?.departmentId],
+    queryKey: ["hod-allocations", user?.departmentId, courses],
     queryFn: async () => {
       if (!user?.departmentId) return [];
       const courseIds = courses.map((c) => c.id);
       if (courseIds.length === 0) return [];
       const { data, error } = await supabase
         .from("course_allocations")
-        .select("*, courses:course_id(code, title), profiles:lecturer_id(full_name, email)")
+        .select("*, courses:course_id(code, title)")
         .in("course_id", courseIds)
         .eq("is_active", true);
       if (error) throw error;
-      return data;
+      // Fetch lecturer profiles separately
+      const lecturerIds = [...new Set(data.map((a) => a.lecturer_id))];
+      if (lecturerIds.length === 0) return data.map((a) => ({ ...a, profiles: null }));
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", lecturerIds);
+      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
+      return data.map((a) => ({ ...a, profiles: profileMap.get(a.lecturer_id) || null }));
     },
     enabled: courses.length > 0,
   });
