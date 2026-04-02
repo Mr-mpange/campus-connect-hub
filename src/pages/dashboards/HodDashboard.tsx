@@ -20,6 +20,8 @@ const HodDashboard = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedLecturer, setSelectedLecturer] = useState("");
   const [academicSession, setAcademicSession] = useState("2024/2025");
+  const [selectedSemester, setSelectedSemester] = useState("1");
+  const [selectedLevel, setSelectedLevel] = useState("bachelor");
 
   // Fetch department courses
   const { data: courses = [] } = useQuery({
