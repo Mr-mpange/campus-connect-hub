@@ -211,6 +211,8 @@ const HodDashboard = () => {
               <TableRow>
                 <TableHead>Course</TableHead>
                 <TableHead>Lecturer</TableHead>
+                <TableHead>Semester</TableHead>
+                <TableHead>Level</TableHead>
                 <TableHead>Session</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
