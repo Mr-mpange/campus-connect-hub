@@ -226,6 +226,8 @@ const HodDashboard = () => {
                   <TableRow key={a.id}>
                     <TableCell className="font-medium">{course?.code} — {course?.title}</TableCell>
                     <TableCell>{lecturer?.full_name || "—"}</TableCell>
+                    <TableCell>Sem {(a as any).semester || "—"}</TableCell>
+                    <TableCell className="capitalize">{(a as any).level || "—"}</TableCell>
                     <TableCell>{a.academic_session}</TableCell>
                     <TableCell>
                       <Badge variant="default">Active</Badge>
