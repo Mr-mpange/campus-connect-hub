@@ -27,7 +27,6 @@ import HodDashboard from "./pages/dashboards/HodDashboard";
 import PaymentVerification from "./pages/PaymentVerification";
 import UssdLogs from "./pages/UssdLogs";
 import UssdAnalytics from "./pages/UssdAnalytics";
-import UssdAnalytics from "./pages/UssdAnalytics";
 import PaymentReceipt from "./pages/PaymentReceipt";
 import PaymentAnalytics from "./pages/PaymentAnalytics";
 import NotFound from "./pages/NotFound";
