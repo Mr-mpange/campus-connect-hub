@@ -29,14 +29,22 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
     queryFn: async () => {
       const { data, error } = await supabase
         .from("course_allocations")
-        .select("*, profiles:lecturer_id(full_name, email)")
+        .select("*")
         .eq("course_id", courseId)
         .order("created_at", { ascending: false });
       if (error) throw error;
+      // Fetch lecturer profiles separately
+      const lecturerIds = [...new Set(data.map((a) => a.lecturer_id))];
+      if (lecturerIds.length === 0) return [];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", lecturerIds);
+      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
       return data.map((a) => ({
         ...a,
-        lecturerName: (a.profiles as unknown as { full_name: string; email: string } | null)?.full_name || "",
-        lecturerEmail: (a.profiles as unknown as { full_name: string; email: string } | null)?.email || "",
+        lecturerName: profileMap.get(a.lecturer_id)?.full_name || "",
+        lecturerEmail: profileMap.get(a.lecturer_id)?.email || "",
       }));
     },
   });
