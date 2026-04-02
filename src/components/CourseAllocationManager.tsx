@@ -122,6 +122,8 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
             {allocations.map((a) => (
               <TableRow key={a.id}>
                 <TableCell className="text-sm">{a.lecturerName} <span className="text-muted-foreground text-xs">({a.lecturerEmail})</span></TableCell>
+                <TableCell>Sem {(a as any).semester || "—"}</TableCell>
+                <TableCell className="capitalize">{(a as any).level || "—"}</TableCell>
                 <TableCell>{a.academic_session}</TableCell>
                 <TableCell><Badge variant={a.is_active ? "default" : "secondary"}>{a.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                 <TableCell>
