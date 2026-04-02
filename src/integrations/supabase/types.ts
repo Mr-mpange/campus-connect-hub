@@ -58,6 +58,8 @@ export type Database = {
           id: string
           is_active: boolean
           lecturer_id: string
+          level: string | null
+          semester: string | null
         }
         Insert: {
           academic_session: string
@@ -66,6 +68,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           lecturer_id: string
+          level?: string | null
+          semester?: string | null
         }
         Update: {
           academic_session?: string
@@ -74,6 +78,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           lecturer_id?: string
+          level?: string | null
+          semester?: string | null
         }
         Relationships: [
           {

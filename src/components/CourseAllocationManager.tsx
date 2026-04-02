@@ -21,6 +21,8 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedLecturer, setSelectedLecturer] = useState("");
   const [session, setSession] = useState("2024/2025");
+  const [semester, setSemester] = useState("1");
+  const [level, setLevel] = useState("bachelor");
 
   const { data: allocations = [], isLoading } = useQuery({
     queryKey: ["allocations", courseId],
@@ -65,6 +67,8 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
         course_id: courseId,
         lecturer_id: selectedLecturer,
         academic_session: session,
+        semester,
+        level,
       });
       if (error) throw error;
     },
@@ -107,6 +111,8 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
           <TableHeader>
             <TableRow>
               <TableHead>Lecturer</TableHead>
+              <TableHead>Semester</TableHead>
+              <TableHead>Level</TableHead>
               <TableHead>Session</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-16"></TableHead>
@@ -116,6 +122,8 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
             {allocations.map((a) => (
               <TableRow key={a.id}>
                 <TableCell className="text-sm">{a.lecturerName} <span className="text-muted-foreground text-xs">({a.lecturerEmail})</span></TableCell>
+                <TableCell>Sem {(a as any).semester || "—"}</TableCell>
+                <TableCell className="capitalize">{(a as any).level || "—"}</TableCell>
                 <TableCell>{a.academic_session}</TableCell>
                 <TableCell><Badge variant={a.is_active ? "default" : "secondary"}>{a.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                 <TableCell>
@@ -147,6 +155,29 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
             <div className="space-y-1.5">
               <Label>Academic Session</Label>
               <Input value={session} onChange={(e) => setSession(e.target.value)} placeholder="2024/2025" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Semester</Label>
+              <Select value={semester} onValueChange={setSemester}>
+                <SelectTrigger><SelectValue placeholder="Select semester" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Semester 1</SelectItem>
+                  <SelectItem value="2">Semester 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Level</Label>
+              <Select value={level} onValueChange={setLevel}>
+                <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="certificate">Certificate</SelectItem>
+                  <SelectItem value="diploma">Diploma</SelectItem>
+                  <SelectItem value="bachelor">Bachelor</SelectItem>
+                  <SelectItem value="masters">Masters</SelectItem>
+                  <SelectItem value="phd">PhD</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

@@ -20,6 +20,8 @@ const HodDashboard = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedLecturer, setSelectedLecturer] = useState("");
   const [academicSession, setAcademicSession] = useState("2024/2025");
+  const [selectedSemester, setSelectedSemester] = useState("1");
+  const [selectedLevel, setSelectedLevel] = useState("bachelor");
 
   // Fetch department courses
   const { data: courses = [] } = useQuery({
@@ -90,6 +92,8 @@ const HodDashboard = () => {
           course_id: selectedCourse,
           lecturer_id: selectedLecturer,
           academic_session: academicSession,
+          semester: selectedSemester,
+          level: selectedLevel,
           is_active: true,
         },
         { onConflict: "course_id,lecturer_id,academic_session" as never }
@@ -138,7 +142,7 @@ const HodDashboard = () => {
           <CardTitle className="text-sm font-medium">Assign Lecturer to Course</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
             <div className="space-y-1">
               <Label className="text-xs">Course</Label>
               <Select value={selectedCourse} onValueChange={setSelectedCourse}>
@@ -158,6 +162,29 @@ const HodDashboard = () => {
                   {lecturers.map((l) => (
                     <SelectItem key={l.user_id} value={l.user_id}>{l.full_name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Semester</Label>
+              <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+                <SelectTrigger><SelectValue placeholder="Semester" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Semester 1</SelectItem>
+                  <SelectItem value="2">Semester 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Level</Label>
+              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                <SelectTrigger><SelectValue placeholder="Level" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="certificate">Certificate</SelectItem>
+                  <SelectItem value="diploma">Diploma</SelectItem>
+                  <SelectItem value="bachelor">Bachelor</SelectItem>
+                  <SelectItem value="masters">Masters</SelectItem>
+                  <SelectItem value="phd">PhD</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -184,6 +211,8 @@ const HodDashboard = () => {
               <TableRow>
                 <TableHead>Course</TableHead>
                 <TableHead>Lecturer</TableHead>
+                <TableHead>Semester</TableHead>
+                <TableHead>Level</TableHead>
                 <TableHead>Session</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
@@ -197,6 +226,8 @@ const HodDashboard = () => {
                   <TableRow key={a.id}>
                     <TableCell className="font-medium">{course?.code} — {course?.title}</TableCell>
                     <TableCell>{lecturer?.full_name || "—"}</TableCell>
+                    <TableCell>Sem {(a as any).semester || "—"}</TableCell>
+                    <TableCell className="capitalize">{(a as any).level || "—"}</TableCell>
                     <TableCell>{a.academic_session}</TableCell>
                     <TableCell>
                       <Badge variant="default">Active</Badge>
