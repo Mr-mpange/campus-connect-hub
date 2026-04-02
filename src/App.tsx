@@ -25,7 +25,6 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import HodDashboard from "./pages/dashboards/HodDashboard";
 import PaymentVerification from "./pages/PaymentVerification";
-import UssdSimulator from "./pages/UssdSimulator";
 import UssdLogs from "./pages/UssdLogs";
 import UssdAnalytics from "./pages/UssdAnalytics";
 import PaymentReceipt from "./pages/PaymentReceipt";
@@ -61,7 +60,6 @@ const App = () => (
               <Route path="/payment-receipt" element={<PaymentReceipt />} />
               <Route path="/payment-analytics" element={<PaymentAnalytics />} />
               <Route path="/lecturer-assignment" element={<HodDashboard />} />
-              <Route path="/ussd-simulator" element={<UssdSimulator />} />
               <Route path="/ussd-logs" element={<UssdLogs />} />
               <Route path="/ussd-analytics" element={<UssdAnalytics />} />
               <Route path="/notices" element={<Notices />} />

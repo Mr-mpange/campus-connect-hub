@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, BookOpen, FileText, Bell, Settings, Building2,
   ClipboardCheck, GraduationCap, BarChart3, Shield, LogOut, ChevronLeft,
-  ChevronRight, CreditCard, Receipt, Library, UserCheck, Smartphone,
+  ChevronRight, CreditCard, Receipt, Library, UserCheck,
   MessageSquare, BarChart,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,7 +33,6 @@ const navItems: NavItem[] = [
   { label: "Notices", icon: Bell, path: "/notices", roles: ["admin", "student", "hod"] },
   { label: "Analytics", icon: BarChart3, path: "/analytics", roles: ["admin"] },
   { label: "Audit Log", icon: Shield, path: "/audit-log", roles: ["admin"] },
-  { label: "USSD Simulator", icon: Smartphone, path: "/ussd-simulator", roles: ["admin"] },
   { label: "USSD Logs", icon: MessageSquare, path: "/ussd-logs", roles: ["admin"] },
   { label: "USSD Analytics", icon: BarChart, path: "/ussd-analytics", roles: ["admin"] },
   { label: "Settings", icon: Settings, path: "/settings", roles: ["admin", "lecturer", "student", "hod"] },
