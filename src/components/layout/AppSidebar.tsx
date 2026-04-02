@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, BookOpen, FileText, Bell, Settings, Building2,
   ClipboardCheck, GraduationCap, BarChart3, Shield, LogOut, ChevronLeft,
-  ChevronRight, CreditCard, Receipt, Library, UserCheck, Smartphone,
+  ChevronRight, CreditCard, Receipt, Library, UserCheck,
   MessageSquare, BarChart,
 } from "lucide-react";
 import { useState } from "react";
