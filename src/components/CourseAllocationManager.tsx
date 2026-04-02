@@ -156,6 +156,29 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
               <Label>Academic Session</Label>
               <Input value={session} onChange={(e) => setSession(e.target.value)} placeholder="2024/2025" />
             </div>
+            <div className="space-y-1.5">
+              <Label>Semester</Label>
+              <Select value={semester} onValueChange={setSemester}>
+                <SelectTrigger><SelectValue placeholder="Select semester" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Semester 1</SelectItem>
+                  <SelectItem value="2">Semester 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Level</Label>
+              <Select value={level} onValueChange={setLevel}>
+                <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="certificate">Certificate</SelectItem>
+                  <SelectItem value="diploma">Diploma</SelectItem>
+                  <SelectItem value="bachelor">Bachelor</SelectItem>
+                  <SelectItem value="masters">Masters</SelectItem>
+                  <SelectItem value="phd">PhD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
