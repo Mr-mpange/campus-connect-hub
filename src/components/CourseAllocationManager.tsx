@@ -67,6 +67,8 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
         course_id: courseId,
         lecturer_id: selectedLecturer,
         academic_session: session,
+        semester,
+        level,
       });
       if (error) throw error;
     },
