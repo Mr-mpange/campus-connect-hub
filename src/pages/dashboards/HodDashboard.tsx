@@ -142,7 +142,7 @@ const HodDashboard = () => {
           <CardTitle className="text-sm font-medium">Assign Lecturer to Course</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
             <div className="space-y-1">
               <Label className="text-xs">Course</Label>
               <Select value={selectedCourse} onValueChange={setSelectedCourse}>
@@ -162,6 +162,29 @@ const HodDashboard = () => {
                   {lecturers.map((l) => (
                     <SelectItem key={l.user_id} value={l.user_id}>{l.full_name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Semester</Label>
+              <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+                <SelectTrigger><SelectValue placeholder="Semester" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Semester 1</SelectItem>
+                  <SelectItem value="2">Semester 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Level</Label>
+              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                <SelectTrigger><SelectValue placeholder="Level" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="certificate">Certificate</SelectItem>
+                  <SelectItem value="diploma">Diploma</SelectItem>
+                  <SelectItem value="bachelor">Bachelor</SelectItem>
+                  <SelectItem value="masters">Masters</SelectItem>
+                  <SelectItem value="phd">PhD</SelectItem>
                 </SelectContent>
               </Select>
             </div>
