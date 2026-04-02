@@ -92,6 +92,8 @@ const HodDashboard = () => {
           course_id: selectedCourse,
           lecturer_id: selectedLecturer,
           academic_session: academicSession,
+          semester: selectedSemester,
+          level: selectedLevel,
           is_active: true,
         },
         { onConflict: "course_id,lecturer_id,academic_session" as never }
