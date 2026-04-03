@@ -294,7 +294,7 @@ const ResultsUpload = () => {
             <div className="text-sm space-y-1">
               <p className="font-medium">{academicSession || "—"}</p>
               <p className="text-muted-foreground text-xs">
-                {allocationSemester ? `Semester ${allocationSemester}` : "—"} · <span className="capitalize">{allocationLevel || "—"}</span>
+                {allocationSemester ? `Semester ${allocationSemester}` : "—"} · <span className="capitalize">{allocationLevel || "—"}</span> · {allocationYear ? `Year ${allocationYear}` : "—"}
               </p>
             </div>
           </CardContent>
