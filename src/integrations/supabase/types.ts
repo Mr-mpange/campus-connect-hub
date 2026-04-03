@@ -60,6 +60,7 @@ export type Database = {
           lecturer_id: string
           level: string | null
           semester: string | null
+          year_of_study: number
         }
         Insert: {
           academic_session: string
@@ -70,6 +71,7 @@ export type Database = {
           lecturer_id: string
           level?: string | null
           semester?: string | null
+          year_of_study?: number
         }
         Update: {
           academic_session?: string
@@ -80,6 +82,7 @@ export type Database = {
           lecturer_id?: string
           level?: string | null
           semester?: string | null
+          year_of_study?: number
         }
         Relationships: [
           {

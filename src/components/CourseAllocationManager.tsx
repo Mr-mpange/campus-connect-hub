@@ -23,7 +23,7 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
   const [session, setSession] = useState("2024/2025");
   const [semester, setSemester] = useState("1");
   const [level, setLevel] = useState("bachelor");
-
+  const [yearOfStudy, setYearOfStudy] = useState("1");
   const { data: allocations = [], isLoading } = useQuery({
     queryKey: ["allocations", courseId],
     queryFn: async () => {
@@ -77,6 +77,7 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
         academic_session: session,
         semester,
         level,
+        year_of_study: parseInt(yearOfStudy),
       });
       if (error) throw error;
     },
@@ -121,6 +122,7 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
               <TableHead>Lecturer</TableHead>
               <TableHead>Semester</TableHead>
               <TableHead>Level</TableHead>
+              <TableHead>Year</TableHead>
               <TableHead>Session</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-16"></TableHead>
@@ -132,6 +134,7 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
                 <TableCell className="text-sm">{a.lecturerName} <span className="text-muted-foreground text-xs">({a.lecturerEmail})</span></TableCell>
                 <TableCell>Sem {(a as any).semester || "—"}</TableCell>
                 <TableCell className="capitalize">{(a as any).level || "—"}</TableCell>
+                <TableCell>Year {(a as any).year_of_study || "—"}</TableCell>
                 <TableCell>{a.academic_session}</TableCell>
                 <TableCell><Badge variant={a.is_active ? "default" : "secondary"}>{a.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                 <TableCell>
@@ -184,6 +187,19 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
                   <SelectItem value="bachelor">Bachelor</SelectItem>
                   <SelectItem value="masters">Masters</SelectItem>
                   <SelectItem value="phd">PhD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Year of Study</Label>
+              <Select value={yearOfStudy} onValueChange={setYearOfStudy}>
+                <SelectTrigger><SelectValue placeholder="Select year" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1st Year</SelectItem>
+                  <SelectItem value="2">2nd Year</SelectItem>
+                  <SelectItem value="3">3rd Year</SelectItem>
+                  <SelectItem value="4">4th Year</SelectItem>
+                  <SelectItem value="5">5th Year</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -153,6 +153,7 @@ const ResultsUpload = () => {
   const academicSession = currentAllocation?.academic_session || "";
   const allocationSemester = (currentAllocation as any)?.semester || "";
   const allocationLevel = (currentAllocation as any)?.level || "";
+  const allocationYear = (currentAllocation as any)?.year_of_study || "";
 
   const { data: existingResults = [] } = useQuery({
     queryKey: ["my-results-upload", selectedCourse, academicSession],
@@ -293,7 +294,7 @@ const ResultsUpload = () => {
             <div className="text-sm space-y-1">
               <p className="font-medium">{academicSession || "—"}</p>
               <p className="text-muted-foreground text-xs">
-                {allocationSemester ? `Semester ${allocationSemester}` : "—"} · <span className="capitalize">{allocationLevel || "—"}</span>
+                {allocationSemester ? `Semester ${allocationSemester}` : "—"} · <span className="capitalize">{allocationLevel || "—"}</span> · {allocationYear ? `Year ${allocationYear}` : "—"}
               </p>
             </div>
           </CardContent>
