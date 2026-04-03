@@ -190,6 +190,19 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <Label>Year of Study</Label>
+              <Select value={yearOfStudy} onValueChange={setYearOfStudy}>
+                <SelectTrigger><SelectValue placeholder="Select year" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1st Year</SelectItem>
+                  <SelectItem value="2">2nd Year</SelectItem>
+                  <SelectItem value="3">3rd Year</SelectItem>
+                  <SelectItem value="4">4th Year</SelectItem>
+                  <SelectItem value="5">5th Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
