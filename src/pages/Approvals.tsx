@@ -33,6 +33,7 @@ const Approvals = () => {
 
       // Group by course + lecturer + session
       const groups = new Map<string, {
+        courseId: string;
         courseCode: string;
         courseTitle: string;
         lecturerId: string;
@@ -47,6 +48,7 @@ const Approvals = () => {
         const course = r.courses as { code: string; title: string } | null;
         if (!groups.has(key)) {
           groups.set(key, {
+            courseId: r.course_id,
             courseCode: course?.code || "",
             courseTitle: course?.title || "",
             lecturerId: r.lecturer_id,
