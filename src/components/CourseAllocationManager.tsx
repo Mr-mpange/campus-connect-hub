@@ -77,6 +77,7 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
         academic_session: session,
         semester,
         level,
+        year_of_study: parseInt(yearOfStudy),
       });
       if (error) throw error;
     },
