@@ -122,6 +122,7 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
               <TableHead>Lecturer</TableHead>
               <TableHead>Semester</TableHead>
               <TableHead>Level</TableHead>
+              <TableHead>Year</TableHead>
               <TableHead>Session</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-16"></TableHead>
