@@ -23,7 +23,7 @@ const CourseAllocationManager = ({ courseId, courseCode }: CourseAllocationManag
   const [session, setSession] = useState("2024/2025");
   const [semester, setSemester] = useState("1");
   const [level, setLevel] = useState("bachelor");
-
+  const [yearOfStudy, setYearOfStudy] = useState("1");
   const { data: allocations = [], isLoading } = useQuery({
     queryKey: ["allocations", courseId],
     queryFn: async () => {
