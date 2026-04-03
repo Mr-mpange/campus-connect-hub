@@ -106,7 +106,7 @@ const Approvals = () => {
             await supabase.functions.invoke("send-sms-notification", {
               body: {
                 type: "results_published",
-                course_id: group.resultIds[0], // We need course_id - get from results
+                course_id: group.courseId,
                 academic_session: group.academicSession,
               },
             });
