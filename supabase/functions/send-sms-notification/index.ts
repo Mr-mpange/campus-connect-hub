@@ -109,20 +109,32 @@ Deno.serve(async (req) => {
         .eq("id", course_id!)
         .single();
 
-      const { data: results } = await serviceClient
-        .from("results")
-        .select("student_id")
-        .eq("course_id", course_id!)
-        .eq("academic_session", academic_session!);
+      // Get students from both results table AND student_courses (registered students)
+      const [resultsRes, registeredRes] = await Promise.all([
+        serviceClient
+          .from("results")
+          .select("student_id")
+          .eq("course_id", course_id!)
+          .eq("academic_session", academic_session!),
+        serviceClient
+          .from("student_courses")
+          .select("student_id")
+          .eq("course_id", course_id!)
+          .eq("academic_session", academic_session!),
+      ]);
 
-      if (!results || results.length === 0) {
+      const allStudentIds = new Set<string>();
+      (resultsRes.data || []).forEach((r: any) => allStudentIds.add(r.student_id));
+      (registeredRes.data || []).forEach((r: any) => allStudentIds.add(r.student_id));
+
+      if (allStudentIds.size === 0) {
         return new Response(
           JSON.stringify({ message: "No students to notify", sent: 0 }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const studentIds = [...new Set(results.map((r: any) => r.student_id))];
+      const studentIds = [...allStudentIds];
       const { data: profiles } = await serviceClient
         .from("profiles")
         .select("phone")
