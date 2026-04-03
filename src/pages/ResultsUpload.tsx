@@ -153,6 +153,7 @@ const ResultsUpload = () => {
   const academicSession = currentAllocation?.academic_session || "";
   const allocationSemester = (currentAllocation as any)?.semester || "";
   const allocationLevel = (currentAllocation as any)?.level || "";
+  const allocationYear = (currentAllocation as any)?.year_of_study || "";
 
   const { data: existingResults = [] } = useQuery({
     queryKey: ["my-results-upload", selectedCourse, academicSession],
