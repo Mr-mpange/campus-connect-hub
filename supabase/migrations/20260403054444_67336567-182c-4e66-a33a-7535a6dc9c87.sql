@@ -1,0 +1,1 @@
+ALTER TABLE public.course_allocations ADD COLUMN IF NOT EXISTS year_of_study integer NOT NULL DEFAULT 1;
