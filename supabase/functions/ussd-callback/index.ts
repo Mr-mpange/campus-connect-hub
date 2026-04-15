@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const DEFAULT_PIN = "1234";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -24,7 +26,6 @@ Deno.serve(async (req) => {
     const parts = text.split("*");
     const level = parts.length;
 
-    // Helper to log and respond
     const logAndRespond = async (
       message: string,
       opts: { studentId?: string; userId?: string; menu?: string; ended?: boolean } = {}
@@ -69,11 +70,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    // If no PIN set, set default
     if (!profile.ussd_pin) {
-      return await logAndRespond(
-        "END USSD PIN not set. Please set your PIN in the web portal under Settings.",
-        { studentId: studentIdInput, userId: profile.user_id }
-      );
+      await serviceClient
+        .from("profiles")
+        .update({ ussd_pin: DEFAULT_PIN })
+        .eq("user_id", profile.user_id);
+      profile.ussd_pin = DEFAULT_PIN;
     }
 
     if (profile.ussd_pin !== pinInput) {
@@ -85,6 +88,55 @@ Deno.serve(async (req) => {
 
     const userId = profile.user_id;
     const logOpts = { studentId: studentIdInput, userId };
+
+    // Check if using default PIN - force change
+    if (profile.ussd_pin === DEFAULT_PIN) {
+      // Force PIN change flow
+      if (level === 2) {
+        return await logAndRespond(
+          "CON Welcome! You are using the default PIN.\nYou must change it before continuing.\n\nEnter new 4-digit PIN:",
+          { ...logOpts, menu: "force_change_pin" }
+        );
+      }
+      if (level === 3) {
+        const newPin = parts[2];
+        if (!/^\d{4}$/.test(newPin)) {
+          return await logAndRespond("END Invalid PIN. Must be exactly 4 digits.", {
+            ...logOpts, menu: "force_change_pin",
+          });
+        }
+        if (newPin === DEFAULT_PIN) {
+          return await logAndRespond("END New PIN cannot be the same as the default. Try again.", {
+            ...logOpts, menu: "force_change_pin",
+          });
+        }
+        return await logAndRespond("CON Confirm new PIN (enter again):", {
+          ...logOpts, menu: "force_change_pin",
+        });
+      }
+      if (level === 4) {
+        const newPin = parts[2];
+        const confirmPin = parts[3];
+        if (newPin !== confirmPin) {
+          return await logAndRespond("END PINs do not match. Please try again.", {
+            ...logOpts, menu: "force_change_pin",
+          });
+        }
+        const { error: updateErr } = await serviceClient
+          .from("profiles")
+          .update({ ussd_pin: newPin })
+          .eq("user_id", userId);
+        if (updateErr) {
+          return await logAndRespond("END Failed to update PIN. Try again later.", {
+            ...logOpts, menu: "force_change_pin",
+          });
+        }
+        return await logAndRespond("END PIN changed successfully! Please dial again to access the portal.", {
+          ...logOpts, menu: "force_change_pin", ended: true,
+        });
+      }
+      return await logAndRespond("END Invalid input. Please try again.", logOpts);
+    }
 
     // Level 2: Main menu
     if (level === 2) {
@@ -100,11 +152,9 @@ Deno.serve(async (req) => {
     if (menuChoice === "1") {
       if (level === 3) {
         return await logAndRespond("CON Enter Academic Session (e.g. 2024/2025):", {
-          ...logOpts,
-          menu: "results",
+          ...logOpts, menu: "results",
         });
       }
-
       const session = parts[3];
       const { data: results } = await serviceClient
         .from("results")
@@ -115,14 +165,12 @@ Deno.serve(async (req) => {
 
       if (!results || results.length === 0) {
         return await logAndRespond(`END No published results found for session ${session}.`, {
-          ...logOpts,
-          menu: "results",
+          ...logOpts, menu: "results",
         });
       }
 
       let msg = `Results for ${session}:\n`;
-      let totalPoints = 0,
-        totalCredits = 0;
+      let totalPoints = 0, totalCredits = 0;
       const gradePoints: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
 
       for (const r of results) {
@@ -133,7 +181,6 @@ Deno.serve(async (req) => {
           totalCredits += c?.credit_units || 0;
         }
       }
-
       const gpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "N/A";
       msg += `\nGPA: ${gpa}`;
       return await logAndRespond(`END ${msg}`, { ...logOpts, menu: "results", ended: true });
@@ -152,12 +199,7 @@ Deno.serve(async (req) => {
         return await logAndRespond("END No payments found.", { ...logOpts, menu: "payments" });
       }
 
-      const typeLabels: Record<string, string> = {
-        tuition: "Tuition",
-        exam: "Exam",
-        registration: "Reg",
-        retake: "Retake",
-      };
+      const typeLabels: Record<string, string> = { tuition: "Tuition", exam: "Exam", registration: "Reg", retake: "Retake" };
       let msg = "Recent Payments:\n";
       for (const p of payments) {
         const type = typeLabels[p.payment_type] || p.payment_type;
@@ -177,10 +219,7 @@ Deno.serve(async (req) => {
         .limit(10);
 
       if (!courses || courses.length === 0) {
-        return await logAndRespond("END No registered courses found.", {
-          ...logOpts,
-          menu: "courses",
-        });
+        return await logAndRespond("END No registered courses found.", { ...logOpts, menu: "courses" });
       }
 
       let msg = "Registered Courses:\n";
@@ -214,76 +253,38 @@ Deno.serve(async (req) => {
 
     // ── 5. CHANGE PIN ──
     if (menuChoice === "5") {
-      // Step 1: Ask for new PIN
       if (level === 3) {
-        return await logAndRespond("CON Enter new 4-digit PIN:", {
-          ...logOpts,
-          menu: "change_pin",
-        });
+        return await logAndRespond("CON Enter new 4-digit PIN:", { ...logOpts, menu: "change_pin" });
       }
-
       const newPin = parts[3];
-
-      // Step 2: Confirm new PIN
       if (level === 4) {
-        // Validate new PIN format
         if (!/^\d{4}$/.test(newPin)) {
-          return await logAndRespond("END Invalid PIN. Must be exactly 4 digits.", {
-            ...logOpts,
-            menu: "change_pin",
-          });
+          return await logAndRespond("END Invalid PIN. Must be exactly 4 digits.", { ...logOpts, menu: "change_pin" });
         }
-        return await logAndRespond("CON Confirm new PIN (enter again):", {
-          ...logOpts,
-          menu: "change_pin",
-        });
+        return await logAndRespond("CON Confirm new PIN (enter again):", { ...logOpts, menu: "change_pin" });
       }
-
       const confirmPin = parts[4];
-
-      // Step 3: Validate and save
       if (level === 5) {
         if (newPin !== confirmPin) {
-          return await logAndRespond("END PINs do not match. Please try again.", {
-            ...logOpts,
-            menu: "change_pin",
-          });
+          return await logAndRespond("END PINs do not match. Please try again.", { ...logOpts, menu: "change_pin" });
         }
-
         if (!/^\d{4}$/.test(newPin)) {
-          return await logAndRespond("END Invalid PIN. Must be exactly 4 digits.", {
-            ...logOpts,
-            menu: "change_pin",
-          });
+          return await logAndRespond("END Invalid PIN. Must be exactly 4 digits.", { ...logOpts, menu: "change_pin" });
         }
-
-        // Update PIN in database
         const { error: updateErr } = await serviceClient
           .from("profiles")
           .update({ ussd_pin: newPin })
           .eq("user_id", userId);
-
         if (updateErr) {
-          return await logAndRespond("END Failed to update PIN. Please try again later.", {
-            ...logOpts,
-            menu: "change_pin",
-          });
+          return await logAndRespond("END Failed to update PIN. Please try again later.", { ...logOpts, menu: "change_pin" });
         }
-
-        return await logAndRespond("END PIN changed successfully!", {
-          ...logOpts,
-          menu: "change_pin",
-          ended: true,
-        });
+        return await logAndRespond("END PIN changed successfully!", { ...logOpts, menu: "change_pin", ended: true });
       }
     }
 
     // ── 0. EXIT ──
     if (menuChoice === "0") {
-      return await logAndRespond("END Thank you for using the Student Portal. Goodbye!", {
-        ...logOpts,
-        menu: "exit",
-      });
+      return await logAndRespond("END Thank you for using the Student Portal. Goodbye!", { ...logOpts, menu: "exit" });
     }
 
     return await logAndRespond("END Invalid selection. Please try again.", logOpts);
