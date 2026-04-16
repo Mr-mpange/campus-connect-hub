@@ -74,6 +74,39 @@ Deno.serve(async (req) => {
     // Assign role
     await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
 
+    // Send SMS with registration number if phone and student_id provided
+    if (phone && student_id) {
+      const atApiKey = Deno.env.get("AFRICASTALKING_API_KEY");
+      const atUsername = Deno.env.get("AFRICASTALKING_USERNAME");
+
+      if (atApiKey && atUsername) {
+        const message = `[UniSIMS] Welcome ${full_name}! Your registration number is: ${student_id}. Use it to login via USSD. Your default PIN is 1234 — you will be asked to change it on first use.`;
+        
+        const atUrl = atUsername === "sandbox"
+          ? "https://api.sandbox.africastalking.com/version1/messaging"
+          : "https://api.africastalking.com/version1/messaging";
+
+        const smsForm = new URLSearchParams();
+        smsForm.append("username", atUsername);
+        smsForm.append("to", phone);
+        smsForm.append("message", message);
+
+        try {
+          await fetch(atUrl, {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/x-www-form-urlencoded",
+              apiKey: atApiKey,
+            },
+            body: smsForm.toString(),
+          });
+        } catch (smsErr) {
+          console.error("Welcome SMS failed:", smsErr);
+        }
+      }
+    }
+
     // Audit log
     await supabaseAdmin.from("audit_logs").insert({
       user_id: callerId,
