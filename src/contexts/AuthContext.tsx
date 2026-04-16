@@ -31,7 +31,12 @@ async function buildUser(supabaseUser: SupabaseUser): Promise<User> {
     .select("role")
     .eq("user_id", supabaseUser.id);
 
-  const role = (roles?.[0]?.role as UserRole) || "student";
+  // Prioritize highest role: admin > hod > lecturer > student
+  const rolePriority: Record<string, number> = { admin: 4, hod: 3, lecturer: 2, student: 1 };
+  const sortedRoles = (roles || []).sort(
+    (a, b) => (rolePriority[b.role] || 0) - (rolePriority[a.role] || 0)
+  );
+  const role = (sortedRoles[0]?.role as UserRole) || "student";
 
   // Fetch profile
   const { data: profile } = await supabase

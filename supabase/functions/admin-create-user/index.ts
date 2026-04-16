@@ -49,12 +49,12 @@ Deno.serve(async (req) => {
 
     const { email, password, full_name, role, department_id, student_id, phone } = await req.json();
 
-    // Create auth user
+    // Create auth user with created_by_admin flag to prevent auto student role
     const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name },
+      user_metadata: { full_name, created_by_admin: true },
     });
 
     if (createErr) {
