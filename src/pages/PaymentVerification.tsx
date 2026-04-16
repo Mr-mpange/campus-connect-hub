@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/shared/PageHeader";
 import StatCard from "@/components/shared/StatCard";
@@ -20,6 +20,7 @@ const paymentTypeLabels: Record<string, string> = {
 };
 
 const PaymentVerification = () => {
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [bulkSmsOpen, setBulkSmsOpen] = useState(false);
@@ -114,6 +115,7 @@ const PaymentVerification = () => {
                 <TableHead>Status</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Paid At</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -145,6 +147,29 @@ const PaymentVerification = () => {
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {p.paid_at ? new Date(p.paid_at).toLocaleString() : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {p.status === "pending" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1 text-xs"
+                          onClick={async () => {
+                            const { error } = await supabase
+                              .from("payments")
+                              .update({ status: "paid", paid_at: new Date().toISOString(), description: "Manually approved by admin" })
+                              .eq("id", p.id);
+                            if (error) {
+                              toast.error("Failed to approve payment");
+                            } else {
+                              toast.success("Payment marked as paid");
+                              qc.invalidateQueries({ queryKey: ["admin-payments"] });
+                            }
+                          }}
+                        >
+                          <CheckCircle2 className="w-3 h-3" /> Approve
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
