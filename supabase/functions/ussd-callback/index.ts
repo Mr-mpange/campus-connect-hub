@@ -18,10 +18,28 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const formData = await req.formData();
-    const sessionId = formData.get("sessionId") as string;
-    const phoneNumber = formData.get("phoneNumber") as string;
-    const text = (formData.get("text") as string) || "";
+    // Africa's Talking sends as application/x-www-form-urlencoded
+    const contentType = req.headers.get("content-type") || "";
+    let sessionId: string, phoneNumber: string, text: string;
+
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      sessionId = body.sessionId;
+      phoneNumber = body.phoneNumber;
+      text = body.text || "";
+    } else if (contentType.includes("application/x-www-form-urlencoded")) {
+      const raw = await req.text();
+      const params = new URLSearchParams(raw);
+      sessionId = params.get("sessionId") as string;
+      phoneNumber = params.get("phoneNumber") as string;
+      text = params.get("text") || "";
+    } else {
+      // fallback: try formData
+      const formData = await req.formData();
+      sessionId = formData.get("sessionId") as string;
+      phoneNumber = formData.get("phoneNumber") as string;
+      text = (formData.get("text") as string) || "";
+    }
 
     const parts = text.split("*");
     const level = parts.length;
