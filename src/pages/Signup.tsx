@@ -35,7 +35,8 @@ const Signup = () => {
       .select("id, name, code")
       .eq("is_active", true)
       .order("name")
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        console.log("departments fetch:", { data, error });
         if (data) setDepartments(data);
       });
   }, []);
