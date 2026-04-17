@@ -35,7 +35,7 @@ const MyResults = () => {
         .from("results")
         .select("*, courses:course_id(code, title, credit_units, semester)")
         .eq("student_id", user.id)
-        .in("status", ["approved", "published"])
+        .in("status", ["submitted", "approved", "published"])
         .order("academic_session", { ascending: false });
       if (error) throw error;
       return data.map((r) => {
@@ -179,8 +179,10 @@ const MyResults = () => {
                             <TableCell>
                               {r.status === "published" ? (
                                 <Badge variant="default" className="gap-1"><CheckCircle2 className="w-3 h-3" /> Published</Badge>
+                              ) : r.status === "approved" ? (
+                                <Badge variant="secondary" className="gap-1"><CheckCircle2 className="w-3 h-3" /> Approved</Badge>
                               ) : (
-                                <Badge variant="secondary" className="gap-1"><Clock className="w-3 h-3" /> Approved</Badge>
+                                <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Pending Approval</Badge>
                               )}
                             </TableCell>
                           </TableRow>
